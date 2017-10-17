@@ -79,8 +79,8 @@ class HD_TEMP(HD_DEVICE):
     #   Override to return the F/C config
     def get_config(self):
         return self.fc
-
-#   subclass representing some sort of power/voltage controller
+    
+#   subclass representing some sort of voltage controller
 class HD_POWER(HD_DEVICE):
 
     def __init__(self, status="OFF", address="0X03", volts="5", config="5", alias="POWER"):

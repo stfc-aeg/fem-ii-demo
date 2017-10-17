@@ -15,9 +15,10 @@ class ipc_client:
 
     def __init__(self):
 
-        ident= str(randint(0, 100000000))
+        ident= str(randint(0, 100000))
         self.identity = "Client %s" % ident
-        self.url = "tcp://localhost:5556"
+        #self.url = "tcp://localhost:5556"
+        self.url = "tcp://te7aegserver:5556"
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.DEALER)
         self.socket.setsockopt(zmq.IDENTITY, self.identity.encode())
@@ -62,12 +63,10 @@ class ipc_client:
                     while msg_config not in LED_STATES:
                         msg_config = input("ON or OFF are the only LED configurations.\nLED STATE: \n")
                 
-
                 if msg_device == "TEMP":
                     msg_config = input("F/C:" + "\n")
                     while msg_config not in TEMP_STATES:
                         msg_config = input("F/C are the only temperature configurations.\nF/C: \n")
-
 
                 if msg_device == "POWER":
                     msg_config = input("VOLTAGE:" + "\n")
@@ -86,8 +85,10 @@ class ipc_client:
                 request = cast_bytes(request)
 
             #   send multipart message address is automatically added it seems
-            self.socket.send_multipart([b"", request,])
-            
+            #self.socket.send_multipart([b"", request,])
+
+            self.socket.send(request)
+
             #   Wait for the IPC message response and notify end-user
             #   strip off the first part, get the reply
             r_address, reply = self.socket.recv_multipart()
@@ -95,13 +96,12 @@ class ipc_client:
             #   format it as an IPC message
             reply = IpcMessage(from_str=reply)
 
-            
             #reply = IpcMessage(from_str=self.socket.recv())
             print("Received Response: %s" % reply.get_param("REPLY"))
 
 def main():
 
-    
+    #   Run client process
     client = ipc_client()
     client.connect()
     client.run_req()

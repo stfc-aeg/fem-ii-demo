@@ -1,3 +1,10 @@
+'''
+    Server with three emulated hardware devices
+    Communicates with 
+
+
+'''
+
 import zmq
 from odin_data.ipc_message import IpcMessage, IpcMessageException
 from HD_DEVICES import HD_LED, HD_POWER, HD_TEMP
@@ -59,11 +66,13 @@ class ipc_server:
         while True:
 
             try:
-                #   receive the request as an IPC message
-                client_address, empty, request = self.socket.recv_multipart()
+                #   receive the request as a multi-part
+                client_address, request = self.socket.recv_multipart()
 
+                #   split off the request part into an IpcMessage
                 request = IpcMessage(from_str=request)
 
+                #   Notify user
                 print("received request : %s from %s" % (request, client_address.decode()))
                 
                 #   Get the alias device name used in the request
