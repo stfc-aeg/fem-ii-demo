@@ -9,6 +9,7 @@ import zmq
 from odin_data.ipc_message import IpcMessage, IpcMessageException
 from HD_DEVICES import HD_LED, HD_POWER, HD_TEMP
 from zmq.utils.strtypes import unicode, cast_bytes
+import argparse
 
 msg_types = {"CMD"}
 msg_vals = {"STATUS", "CONFIG", "NOTIFY"}
@@ -17,11 +18,11 @@ hd_addrs = { "0X01", "0X02", "0X03"}
 
 class ipc_server:
 
-    def __init__(self):
+    def __init__(self, port):
 
         ident = b'FEMII-ZYNQ'
         self.identity = "Server {}" % ident
-        self.url = "tcp://*:5556"
+        self.url = "tcp://*:%s" % port
         self.context = zmq.Context() 
         self.socket = self.context.socket(zmq.ROUTER)
         self.socket.setsockopt(zmq.IDENTITY, self.identity.encode())
@@ -129,7 +130,11 @@ class ipc_server:
 
 def main(): 
 
-    server = ipc_server()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-port", "--port", help="Port connection, default = 5555", default="5555")
+    args = parser.parse_args()
+
+    server = ipc_server(args.port)
 
     #   configure hardware addresses and alias look up tables
     server.assign_addresses()
