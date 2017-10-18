@@ -1,6 +1,7 @@
 '''
     Server with three emulated hardware devices
-    Communicates with 
+    Communicates with N number of ipc_clients
+    Uses Ipc Message formatting
 
 
 '''
@@ -20,8 +21,8 @@ class ipc_server:
 
     def __init__(self, port):
 
-        ident = b'FEMII-ZYNQ'
-        self.identity = "Server {}" % ident
+        ident = 'FEMII-ZYNQ'
+        self.identity = "Server %s" % ident
         self.url = "tcp://*:%s" % port
         self.context = zmq.Context() 
         self.socket = self.context.socket(zmq.ROUTER)
@@ -130,15 +131,19 @@ class ipc_server:
 
 def main(): 
 
+    #   Accept command line arguments for the port number used, default is 5555
     parser = argparse.ArgumentParser()
     parser.add_argument("-port", "--port", help="Port connection, default = 5555", default="5555")
     args = parser.parse_args()
 
+    #   Initialise a server
     server = ipc_server(args.port)
 
     #   configure hardware addresses and alias look up tables
     server.assign_addresses()
     server.make_lookup()
+    
+    #   Display the fake device address tree
     print("Hardware device address tree:") 
     print(server.lookup)
 

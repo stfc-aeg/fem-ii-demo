@@ -1,3 +1,9 @@
+'''
+    Client, communicates with a single ipc_server
+    Uses Ipc Message formatting
+    
+'''
+
 import zmq
 from odin_data.ipc_message import IpcMessage
 from random import randint
