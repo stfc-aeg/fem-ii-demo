@@ -1,8 +1,7 @@
 from random import randint
 import random
 
-
-class HD_DEVICE:
+class HdDevice:
     """ Represents a generic hardware device """
 
     def __init__(self, status, 
@@ -44,7 +43,7 @@ class HD_DEVICE:
         pass
 
 
-class HD_LED(HD_DEVICE):
+class HdLed(HdDevice):
     """ Subclass, extends HD_DEVICE
 
     Represents a simple LED hardware device
@@ -55,7 +54,7 @@ class HD_LED(HD_DEVICE):
                 address="0X01", alias="LED"):
         """ Subclass constructor """
         
-        HD_DEVICE.__init__(self, status, address, alias)
+        HdDevice.__init__(self, status, address, alias)
 
     # @ovveride
     def get_data(self):
@@ -88,7 +87,7 @@ class HD_LED(HD_DEVICE):
         self.status = config
 
 
-class HD_TEMP(HD_DEVICE):
+class HdTemp(HdDevice):
     """ Subclass, extends HD_DEVICE
 
     Represents a simple Temperature sensing hardware device
@@ -102,7 +101,7 @@ class HD_TEMP(HD_DEVICE):
                 alias="TEMP"):
         """ Subclass constructor """
 
-        HD_DEVICE.__init__(self, status, address, alias)
+        HdDevice.__init__(self, status, address, alias)
         self.temp = temp
         self.fc = fc
 
@@ -136,7 +135,7 @@ class HD_TEMP(HD_DEVICE):
         return self.fc
 
 
-class HD_POWER(HD_DEVICE):
+class HdPower(HdDevice):
     """ Subclass, extends HD_DEVICE
 
     Represents a simple Power control hardware device
@@ -148,7 +147,7 @@ class HD_POWER(HD_DEVICE):
                 volts="5", config="5", alias="POWER"):
         """ Subclass constructor """
 
-        HD_DEVICE.__init__(self, status, address, alias)
+        HdDevice.__init__(self, status, address, alias)
         self.volts = volts
         self.config = config
 

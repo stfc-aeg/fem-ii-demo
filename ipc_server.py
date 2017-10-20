@@ -7,17 +7,18 @@
 '''
 
 import zmq
+import argparse
 from odin_data.ipc_message import IpcMessage, IpcMessageException
 from HD_DEVICES import HD_LED, HD_POWER, HD_TEMP
 from zmq.utils.strtypes import unicode, cast_bytes
-import argparse
-
-msg_types = {"CMD"}
-msg_vals = {"STATUS", "CONFIG", "NOTIFY"}
-hd_addrs = {"0X01", "0X02", "0X03"}
 
 
-class ipc_server:
+MSG_TYPES = {"CMD"}
+MSG_VALS = {"STATUS", "CONFIG", "NOTIFY"}
+HD_ADDR = {"0X01", "0X02", "0X03"}
+
+
+class IpcServer:
 
     def __init__(self, port):
 
@@ -35,7 +36,6 @@ class ipc_server:
         """ binds the zmq socket """
         self.socket.bind(self.url)
 
-
     def assign_addresses(self):
         ''' Assign addresses to hardware devices.
         
@@ -49,7 +49,6 @@ class ipc_server:
                 device.set_addr(self.address_pool[x])
                 x += 1
 
-
     def make_lookup(self):
         ''' Generates list of alias names and their addresses '''
 
@@ -57,7 +56,6 @@ class ipc_server:
             address = device.get_addr()
             alias = device.get_alias()
             self.lookup[alias] = address
-
 
     def process_address(self, request):
         ''' Return the address of the alias in request
@@ -74,16 +72,16 @@ class ipc_server:
 
         return address
     
-
     def run_rep(self):
-        ''' sends a request, waits for a reply, processes the request and returns response  '''
+        ''' sends a request, waits for a reply, returns response  '''
 
         while True:
 
             try:
                 client_address, request = self.socket.recv_multipart()
                 request = IpcMessage(from_str=request)
-                print("received request : %s from %s" % (request, client_address.decode()))
+                print("received request : %s from %s" % 
+                    (request, client_address.decode()))
                 
                 # Get the alias device name used in the request
                 req_alias = request.get_param("DEVICE")
@@ -106,15 +104,21 @@ class ipc_server:
                 if req_msg_val == "CONFIG":
                     req_config = request.get_param("CONFIG")
                     req_device.set_config(req_config)
-                    reply_string = "Processed Request from %s. Set %s at address %s to: %s." % (client_address.decode(), req_alias, req_address, req_device.get_config())
+                    reply_string = "Processed Request from %s. Set %s at \
+                                    address %s to: %s." % (client_address.decode(), 
+                                    req_alias, req_address, req_device.get_config())
 
                 if req_msg_val == "STATUS":
                     rep_status = req_device.get_status()
-                    reply_string = "Processed Request from %s. Status of %s at address %s is: %s." % (client_address.decode(), req_alias, req_address, rep_status)
+                    reply_string = "Processed Request from %s. Status of %s at \
+                                    address %s is: %s." % (client_address.decode(), 
+                                    req_alias, req_address, rep_status)
 
                 if req_msg_val == "READ":
                     rep_value = req_device.get_data()
-                    reply_string = "Processed Request from %s. Value of %s at address %s is: %s." % (client_address.decode(), req_alias, req_address, rep_value)
+                    reply_string = "Processed Request from %s. Value of %s at \
+                                    address %s is: %s." % (client_address.decode(), 
+                                    req_alias, req_address, rep_value)
 
                 reply_message.set_param("REPLY", reply_string)
 
@@ -126,7 +130,7 @@ class ipc_server:
                     reply_message = cast_bytes(reply_message)
 
                 # send a multipart back to the client 
-                self.socket.send_multipart([client_address, b"", reply_message, ])
+                self.socket.send_multipart([client_address, b"", reply_message,])
             except IpcMessageException as err:
                 print("IPC MESSAGE Error Found %s: " % str(err))
 
@@ -135,11 +139,12 @@ def main():
 
     # Accept command line arguments for the port number used, default is 5555
     parser = argparse.ArgumentParser()
-    parser.add_argument("-port", "--port", help="Port connection, default = 5555", default="5555")
+    parser.add_argument("-port", "--port", help="Port connection, default = 5555", 
+                        default="5555")
     args = parser.parse_args()
 
     # Initialise a server
-    server = ipc_server(args.port)
+    server = IpcServer(args.port)
 
     # configure hardware addresses and alias look up tables
     server.assign_addresses()
