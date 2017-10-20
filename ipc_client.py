@@ -15,7 +15,7 @@ from zmq.utils.strtypes import unicode, cast_bytes
 MSG_TYPES = {"CMD"}
 MSG_VALS = {"STATUS", "CONFIG", "READ"}
 HD_DEVICES = {"LED", "TEMP", "POWER"}
-LED_STATES = {"ON", "OFF"}
+LED_STATES = {"ON", "OFF", "BLINK"}
 TEMP_STATES = {"C", "F"}
 VOLT_STATES = {"5", "3.3"}
 
@@ -48,7 +48,7 @@ class IpcClient:
         reply = IpcMessage(from_str=reply)
         print("Received Response: %s" % reply.get_param("REPLY"))
 
-    def form_ipc_msg(self, msgType, msgVal, msgDevice, msgConfig):
+    def form_ipc_msg(self, msgType, msgVal, msgDevice, msgConfig, blink_timeout, blink_rate):
         """ Forms and returns an encoded IPC Message
         
         :param msgtype: The type of message i.e CMD
@@ -63,6 +63,9 @@ class IpcClient:
 
         if msgVal == "CONFIG":
             request.set_param("CONFIG", msgConfig)
+            if msgConfig == "BLINK":
+                request.set_param("TIMEOUT", blink_timeout)
+                request.set_param("RATE", blink_rate)
 
         print("%s Configuring service request..." % self.identity)
 
@@ -87,7 +90,9 @@ class IpcClient:
         """
 
         if run_once == True:
-            request = self.form_ipc_msg(msgType, msgVal, msgDevice, msgConfig)
+            blink_timeout = None
+            blink_rate = None
+            request = self.form_ipc_msg(msgType, msgVal, msgDevice, msgConfig, blink_timeout, blink_rate)
             self.socket.send(request)
             self.recv_reply()
 
@@ -115,15 +120,24 @@ class IpcClient:
 
                 # Initialise config to none incase its a STATUS or READ message
                 msg_config = None
+                blink_timeout = None
+                blink_rate = None
 
                 # Hard coded configuration processing for different device options 
                 if msg_val == "CONFIG":
                     if msg_device == "LED":
                         msg_config = input("LED STATE:" + "\n")
                         while msg_config not in LED_STATES:
-                            msg_config = input("ON or OFF are the only LED \
-                                                configurations.\nLED STATE: \n")
-                    
+                            msg_config = input("ON, OFF or BLINK are the only LED \
+                                                        configurations.\nLED STATE: \n")
+                        if msg_config == "BLINK":
+                            blink_timeout = input("BLINK TIMEOUT (in seconds):" + "\n")
+                            while blink_timeout.isnumeric() == False:
+                                blink_timeout = input("Must be a number, BLINK TIMEOUT (in seconds):" + "\n")
+                            blink_rate = input("BLINK RATE (in seconds):" + "\n")
+                            while blink_rate.isnumeric() == False:
+                                blink_rate = input("Must be a number, BLINK RATE(in seconds):" + "\n")
+
                     if msg_device == "TEMP":
                         msg_config = input("F/C:" + "\n")
                         while msg_config not in TEMP_STATES:
@@ -137,7 +151,7 @@ class IpcClient:
                                                 configurations.\nVOLTAGE: \n")
 
                 request = self.form_ipc_msg(msg_type, msg_val, 
-                                            msg_device, msg_config)
+                                            msg_device, msg_config, blink_timeout, blink_rate)
                 self.socket.send(request)
                 self.recv_reply()
 

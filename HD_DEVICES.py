@@ -1,5 +1,7 @@
 from random import randint
 import random
+import time
+import Adafruit_BBIO.GPIO as GPIO
 
 class HdDevice:
     """ Represents a generic hardware device """
@@ -51,10 +53,12 @@ class HdLed(HdDevice):
     
     """
     def __init__(self, status="OFF", 
-                address="0X01", alias="LED"):
+                address="0X01", alias="LED", pin="P8_10"):
         """ Subclass constructor """
         
         HdDevice.__init__(self, status, address, alias)
+        self.pin = pin
+        GPIO.setup(self.pin, GPIO.OUT)
 
     # @ovveride
     def get_data(self):
@@ -76,15 +80,29 @@ class HdLed(HdDevice):
         return self.status
 
    # @ovveride
-    def set_config(self, config):
+    def set_config(self, config, rate=0.5, timeout=60):
         """ Sets the status of the LED
         
         :param config: ON/OFF status of the LED
         As the LED has no configuration, 
         sets the status i.e ON/OFF
         """
-
+        if config == "ON":
+            GPIO.output(self.pin, GPIO.HIGH)
+        elif config == "OFF":
+            GPIO.output(self.pin, GPIO.LOW)
+        else:
+            self.blink(rate,timeout)
         self.status = config
+
+    def blink(self, rate, timeout):
+        start = time.time()
+        end = start = timeout
+        while time.time() < end:
+            GPIO.output(self.pin, GPIO.HIGH)
+            time.sleep(rate)
+            GPIO.output(self.pin, GPIO.LOW)
+            time.sleep(rate)
 
 
 class HdTemp(HdDevice):

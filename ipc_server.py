@@ -103,11 +103,25 @@ class IpcServer:
 
                 if req_msg_val == "CONFIG":
                     req_config = request.get_param("CONFIG")
+                    if req_config == "BLINK":
+                        req_timeout = request.get_param("TIMEOUT")
+                        req_rate = request.get_param("RATE")
+                        req_device.set_config(req_config, req_timeout, req_rate)
+                        reply_string = "Processed request from %s. %s at address %s blinked for %d seconds. \
+                                        Current status is %s." % (client_address.decode(),req_alias, req_address, req_timeout, req_device.get_config())
+                    else:
+                        req_device.set_config(req_config)
+                        reply_string = "Processed Request from %s. Set %s at \
+                                        address %s to: %s." % (client_address.decode(),
+                                        req_alias, req_address, req_device.get_config())
+                                        
+                if req_msg_val == "CONFIG":
+                    req_config = request.get_param("CONFIG")
                     req_device.set_config(req_config)
                     reply_string = "Processed Request from %s. Set %s at \
                                     address %s to: %s." % (client_address.decode(), 
                                     req_alias, req_address, req_device.get_config())
-
+  
                 if req_msg_val == "STATUS":
                     rep_status = req_device.get_status()
                     reply_string = "Processed Request from %s. Status of %s at \
