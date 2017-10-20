@@ -9,7 +9,7 @@
 import zmq
 import argparse
 from odin_data.ipc_message import IpcMessage, IpcMessageException
-from HD_DEVICES import HD_LED, HD_POWER, HD_TEMP
+from HD_DEVICES import HdLed, HdPower, HdTemp
 from zmq.utils.strtypes import unicode, cast_bytes
 
 
