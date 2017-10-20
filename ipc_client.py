@@ -154,11 +154,11 @@ def main():
     parser.add_argument("-port", "--port", help="Port connection, default = 5555", 
                         default="5555")
     parser.add_argument("-msg_type", "--msg_type", help="Message type, accepts: %s" 
-                        % msg_types, choices=MSG_TYPES)
+                        % MSG_TYPES, choices=MSG_TYPES)
     parser.add_argument("-msg_val", "--msg_val", help="Message val, accepts: %s " 
-                        % msg_vals, choices=MSG_VALS)
+                        % MSG_VALS, choices=MSG_VALS)
     parser.add_argument("-device", "--device", help="Target device, accepts: %s " 
-                        % hd_devices, choices=HD_DEVICES)
+                        % HD_DEVICES, choices=HD_DEVICES)
     parser.add_argument("-led_config", "--led_config", 
                         help="LED device configuration option, accepts: %s " 
                         % LED_STATES, choices=LED_STATES)

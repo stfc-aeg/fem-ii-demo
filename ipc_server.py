@@ -29,7 +29,7 @@ class IpcServer:
         self.socket = self.context.socket(zmq.ROUTER)
         self.socket.setsockopt(zmq.IDENTITY, self.identity.encode())
         self.address_pool = ["0X01", "0X02", "0X03", "0X04", "0X05"]
-        self.devices = [HD_LED(), HD_TEMP(), HD_POWER()]
+        self.devices = [HdLed(), HdTemp(), HdPower()]
         self.lookup = {}
 
     def bind(self):
