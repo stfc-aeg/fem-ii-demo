@@ -80,7 +80,7 @@ class HdLed(HdDevice):
         return self.status
 
    # @ovveride
-    def set_config(self, config, rate=0.5, timeout=60):
+    def set_config(self, config, timeout=60, rate=5):
         """ Sets the status of the LED
         
         :param config: ON/OFF status of the LED
@@ -92,17 +92,17 @@ class HdLed(HdDevice):
         elif config == "OFF":
             GPIO.output(self.pin, GPIO.LOW)
         else:
-            self.blink(rate,timeout)
+            self.blink(timeout,rate)
         self.status = config
 
-    def blink(self, rate, timeout):
+    def blink(self, timeout, rate):
         start = time.time()
-        end = start = timeout
+        end = start + int(timeout)
         while time.time() < end:
             GPIO.output(self.pin, GPIO.HIGH)
-            time.sleep(rate)
+            time.sleep(int(rate))
             GPIO.output(self.pin, GPIO.LOW)
-            time.sleep(rate)
+            time.sleep(int(rate))
 
 
 class HdTemp(HdDevice):
