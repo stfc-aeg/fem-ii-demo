@@ -25,14 +25,20 @@ class IpcClient:
     def __init__(self, url, port):
         ident= str(randint(0,100000))
         self.identity = "Client %s" % ident
+        self.tcp = url
         self.url = "%s:%s" % (url, port)
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.DEALER)
         self.socket.setsockopt(zmq.IDENTITY, self.identity.encode())
         
+        self.subscribe = self.context.socket(zmq.SUB)
+
     def connect(self):
         """ Connect the socket """
         self.socket.connect(self.url)
+
+        self.subscribe.connect("%s:5556" % self.tcp)
+        self.subscribe.setsockopt_string(zmq.SUBSCRIBE, self.identity)
 
     def recv_reply(self):
         """ Receive reply from ZMQ socket
@@ -47,6 +53,12 @@ class IpcClient:
         # format it as an IPC message
         reply = IpcMessage(from_str=reply)
         print("Received Response: %s" % reply.get_param("REPLY"))
+
+    def recv_ack(self):
+
+        ack = self.subscribe.recv_string()
+        address, message = ack.split()
+        print(message)
 
     def form_ipc_msg(self, msgType, msgVal, msgDevice, msgConfig, blink_timeout, blink_rate):
         """ Forms and returns an encoded IPC Message
@@ -76,7 +88,7 @@ class IpcClient:
 
         return request
 
-    def run_req(self, run_once, msgType, msgVal, msgDevice, msgConfig):
+    def run_req(self, run_once, msgType, msgVal, msgDevice, msgConfig, blink_timeout, blink_rate):
         """ Req-Reply loop, sends request, waits for response
         
         :param run_once: Boolean value, true when command line arguments were 
@@ -90,10 +102,9 @@ class IpcClient:
         """
 
         if run_once == True:
-            blink_timeout = None
-            blink_rate = None
             request = self.form_ipc_msg(msgType, msgVal, msgDevice, msgConfig, blink_timeout, blink_rate)
             self.socket.send(request)
+            self.recv_ack()
             self.recv_reply()
 
         else:
@@ -153,6 +164,7 @@ class IpcClient:
                 request = self.form_ipc_msg(msg_type, msg_val, 
                                             msg_device, msg_config, blink_timeout, blink_rate)
                 self.socket.send(request)
+                self.recv_ack()
                 self.recv_reply()
 
 
@@ -174,7 +186,7 @@ def main():
     parser.add_argument("-device", "--device", help="Target device, accepts: %s " 
                         % HD_DEVICES, choices=HD_DEVICES)
     parser.add_argument("-led_config", "--led_config", 
-                        help="LED device configuration option, accepts: %s " 
+                        help="LED device configuration option, accepts: %s. If BLINK, accepts a timeout and rate value in seconds." 
                         % LED_STATES, choices=LED_STATES)
     parser.add_argument("-temp_config", "--temp_config", 
                         help="Temperature device configuration option, accepts: %s " 
@@ -182,6 +194,12 @@ def main():
     parser.add_argument("-power_config", "--power_config", 
                         help="Power device configuration option, accepts: %s " 
                         % VOLT_STATES, choices=VOLT_STATES)
+    parser.add_argument("-b_timeout", "--b_timeout", 
+                        help="Timeout for BLINK call, must be in seconds.", 
+                        type=int)
+    parser.add_argument("-b_rate", "--b_rate", 
+                        help="Blink rate for BLINK call, must be in seconds.",
+                        type=int)                 
     args = parser.parse_args()
 
     # Ensure that the config options are given for config messages + right devices
@@ -197,7 +215,11 @@ def main():
         and args.temp_config == None):
         parser.error("--msg_val of CONFIG and --device of TEMP requires \
                     --temp_config to be specified.")
-
+    if (args.msg_val == "CONFIG" and args.device == "LED" 
+        and args.led_config == "BLINK" and (args.b_timeout == None or args.b_rate == None)):
+        parser.error("--msg_val of CONFIG and --device of LED with an --led_config \
+                    of BLINK requires that b_timeout and b_rate be specified.")
+    
     """ 
         Ensure no command line configuration arguments are 
         given to status or read messages
@@ -235,15 +257,20 @@ def main():
         client.connect()
 
         # Assign the config argument depending on the device given
+        b_timeout = None
+        b_rate = None
         if args.device == "LED":
             _config = args.led_config
+            if _config == "BLINK":
+                b_timeout = args.b_timeout
+                b_rate = args.b_rate
         elif args.device == "TEMP":
             _config = args.temp_config
         else:
             _config = args.power_config
         client.run_req(run_once, args.msg_type, 
                         args.msg_val, args.device, 
-                        _config)
+                        _config, b_timeout, b_rate)
 
 if __name__ == "__main__":
     main()

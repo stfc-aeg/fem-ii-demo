@@ -87,23 +87,27 @@ class HdLed(HdDevice):
         As the LED has no configuration, 
         sets the status i.e ON/OFF
         """
+        self.status = config
         if config == "ON":
             GPIO.output(self.pin, GPIO.HIGH)
         elif config == "OFF":
             GPIO.output(self.pin, GPIO.LOW)
         else:
             self.blink(timeout,rate)
-        self.status = config
+            self.status = "OFF"
 
     def blink(self, timeout, rate):
         start = time.time()
         end = start + int(timeout)
         while time.time() < end:
             GPIO.output(self.pin, GPIO.HIGH)
+            self.status = "ON"
             time.sleep(int(rate))
             GPIO.output(self.pin, GPIO.LOW)
+            self.status = "OFF"
             time.sleep(int(rate))
 
+        self.status = "OFF"
 
 class HdTemp(HdDevice):
     """ Subclass, extends HD_DEVICE

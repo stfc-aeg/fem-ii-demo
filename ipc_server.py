@@ -7,6 +7,7 @@
 '''
 
 import zmq
+import time
 import argparse
 from odin_data.ipc_message import IpcMessage, IpcMessageException
 from HD_DEVICES import HdLed, HdPower, HdTemp
@@ -28,13 +29,19 @@ class IpcServer:
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.ROUTER)
         self.socket.setsockopt(zmq.IDENTITY, self.identity.encode())
+        
+        self.publisher = self.context.socket(zmq.PUB)
+        self.publisher.setsockopt(zmq.IDENTITY, self.identity.encode())
+
+        
         self.address_pool = ["0X01", "0X02", "0X03", "0X04", "0X05"]
         self.devices = [HdLed(), HdTemp(), HdPower()]
         self.lookup = {}
 
     def bind(self):
-        """ binds the zmq socket """
+        """ binds both of the zmq sockets """
         self.socket.bind(self.url)
+        self.publisher.bind("tcp://*:5556")
 
     def assign_addresses(self):
         ''' Assign addresses to hardware devices.
@@ -72,6 +79,10 @@ class IpcServer:
 
         return address
     
+    def send_ack(self, client, message):
+
+        self.publisher.send_string("%s %s" % (client, message))
+
     def run_rep(self):
         ''' sends a request, waits for a reply, returns response  '''
 
@@ -104,11 +115,12 @@ class IpcServer:
                 if req_msg_val == "CONFIG":
                     req_config = request.get_param("CONFIG")
                     if req_config == "BLINK":
+                        self.send_ack(client_address.decode(), "Starting %s process" % req_config)
                         req_timeout = request.get_param("TIMEOUT")
                         req_rate = request.get_param("RATE")
                         req_device.set_config(req_config, req_timeout, req_rate)
                         reply_string = "Processed request from %s. %s at address %s blinked for %s seconds. \
-                                        Current status is %s." % (client_address.decode(),req_alias, req_address, req_timeout, req_device.get_config())
+                                        " % (client_address.decode(),req_alias, req_address, req_timeout)
                     else:
                         req_device.set_config(req_config)
                         reply_string = "Processed Request from %s. Set %s at \
