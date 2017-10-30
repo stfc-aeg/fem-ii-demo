@@ -98,14 +98,14 @@ class HdLed(HdDevice):
 
     def blink(self, timeout, rate):
         start = time.time()
-        end = start + int(timeout)
+        end = start + float(timeout)
         while time.time() < end:
             GPIO.output(self.pin, GPIO.HIGH)
             self.status = "ON"
-            time.sleep(int(rate))
+            time.sleep(float(rate))
             GPIO.output(self.pin, GPIO.LOW)
             self.status = "OFF"
-            time.sleep(int(rate))
+            time.sleep(float(rate))
 
         self.status = "OFF"
 

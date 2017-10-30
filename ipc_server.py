@@ -150,6 +150,7 @@ class IpcServer:
 
                 # send a multipart back to the client 
                 self.socket.send_multipart([client_address, b"", reply_message,])
+                
             except IpcMessageException as err:
                 print("IPC MESSAGE Error Found %s: " % str(err))
 

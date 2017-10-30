@@ -32,6 +32,7 @@ class IpcClient:
         self.socket.setsockopt(zmq.IDENTITY, self.identity.encode())
         
         self.subscribe = self.context.socket(zmq.SUB)
+        self.WAIT_FOR_ACK = False
 
     def connect(self):
         """ Connect the socket """
@@ -57,10 +58,9 @@ class IpcClient:
     def recv_ack(self):
 
         ack = self.subscribe.recv_string()
-        address, message = ack.split()
-        print(message)
+        print("Received Response: %s" % ack)
 
-    def form_ipc_msg(self, msgType, msgVal, msgDevice, msgConfig, blink_timeout, blink_rate):
+    def form_ipc_msg(self, msgType, msgVal, msgDevice, msgConfig, options=None):
         """ Forms and returns an encoded IPC Message
         
         :param msgtype: The type of message i.e CMD
@@ -76,8 +76,10 @@ class IpcClient:
         if msgVal == "CONFIG":
             request.set_param("CONFIG", msgConfig)
             if msgConfig == "BLINK":
-                request.set_param("TIMEOUT", blink_timeout)
-                request.set_param("RATE", blink_rate)
+                
+                self.WAIT_FOR_ACK = True
+                request.set_param("TIMEOUT", options["blink_timeout"])
+                request.set_param("RATE", options["blink_rate"])
 
         print("%s Configuring service request..." % self.identity)
 
@@ -88,7 +90,16 @@ class IpcClient:
 
         return request
 
-    def run_req(self, run_once, msgType, msgVal, msgDevice, msgConfig, blink_timeout, blink_rate):
+    def isDigit(self, number):
+        try:
+            float(number)
+            return True
+        except ValueError:
+            return False
+
+    def run_req(self, run_once, msgType, msgVal, msgDevice, msgConfig, options=None):
+
+        
         """ Req-Reply loop, sends request, waits for response
         
         :param run_once: Boolean value, true when command line arguments were 
@@ -100,17 +111,21 @@ class IpcClient:
         :param msgConfig: The configuration parameter, None if not provided.
         
         """
-
+        self.WAIT_FOR_ACK = False
+        
         if run_once == True:
-            request = self.form_ipc_msg(msgType, msgVal, msgDevice, msgConfig, blink_timeout, blink_rate)
+            request = self.form_ipc_msg(msgType, msgVal, msgDevice, msgConfig, options)
             self.socket.send(request)
-            self.recv_ack()
+            if self.WAIT_FOR_ACK:
+                self.recv_ack()
             self.recv_reply()
 
         else:
             #Infinite loop of retrieving user input and running REQ-REP
             while True:
                 
+                self.WAIT_FOR_ACK = False
+
                 print("---------------------------------")
 
                 # Validate msg_type (CMD)
@@ -143,11 +158,14 @@ class IpcClient:
                                                         configurations.\nLED STATE: \n")
                         if msg_config == "BLINK":
                             blink_timeout = input("BLINK TIMEOUT (in seconds):" + "\n")
-                            while blink_timeout.isnumeric() == False:
+                            while self.isDigit(blink_timeout) == False:
                                 blink_timeout = input("Must be a number, BLINK TIMEOUT (in seconds):" + "\n")
+                            options["blink_timeout"] = blink_timeout
+
                             blink_rate = input("BLINK RATE (in seconds):" + "\n")
-                            while blink_rate.isnumeric() == False:
+                            while self.isDigit(blink_rate) == False:
                                 blink_rate = input("Must be a number, BLINK RATE(in seconds):" + "\n")
+                            options["blink_rate"] = blink_rate
 
                     if msg_device == "TEMP":
                         msg_config = input("F/C:" + "\n")
@@ -162,13 +180,16 @@ class IpcClient:
                                                 configurations.\nVOLTAGE: \n")
 
                 request = self.form_ipc_msg(msg_type, msg_val, 
-                                            msg_device, msg_config, blink_timeout, blink_rate)
+                                            msg_device, msg_config, options)
                 self.socket.send(request)
-                self.recv_ack()
+                if self.WAIT_FOR_ACK:
+                    self.recv_ack()
                 self.recv_reply()
 
 
 def main():
+
+    options = {}
 
     """ 
         Define arguments for a one-shot client request 
@@ -196,10 +217,10 @@ def main():
                         % VOLT_STATES, choices=VOLT_STATES)
     parser.add_argument("-b_timeout", "--b_timeout", 
                         help="Timeout for BLINK call, must be in seconds.", 
-                        type=int)
+                        type=float)
     parser.add_argument("-b_rate", "--b_rate", 
                         help="Blink rate for BLINK call, must be in seconds.",
-                        type=int)                 
+                        type=float)                 
     args = parser.parse_args()
 
     # Ensure that the config options are given for config messages + right devices
@@ -262,15 +283,15 @@ def main():
         if args.device == "LED":
             _config = args.led_config
             if _config == "BLINK":
-                b_timeout = args.b_timeout
-                b_rate = args.b_rate
+                options["blink_timeout"] = args.b_timeout
+                options["blink_rate"] = args.b_rate
         elif args.device == "TEMP":
             _config = args.temp_config
         else:
             _config = args.power_config
         client.run_req(run_once, args.msg_type, 
                         args.msg_val, args.device, 
-                        _config, b_timeout, b_rate)
+                        _config, options)
 
 if __name__ == "__main__":
     main()
