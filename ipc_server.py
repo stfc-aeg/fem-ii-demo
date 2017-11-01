@@ -115,12 +115,12 @@ class IpcServer:
 
                 if req_msg_val == "PROCESS":
                     req_process = request.get_param("PROCESS")
-                        if req_process == "BLINK":
-                            self.send_ack(client_address.decode(), "Starting %s process" % req_process)
-                            req_timeout = request.get_param("TIMEOUT")
-                            req_rate = request.get_param("RATE")
-                            req_device.run_process(req_process, req_timeout, req_rate)
-                            reply_string = "Processed request from %s. %s at address %s blinked for %s seconds. \
+                    if req_process == "BLINK":
+                        self.send_ack(client_address.decode(), "Starting %s process" % req_process)
+                        req_timeout = request.get_param("TIMEOUT")
+                        req_rate = request.get_param("RATE")
+                        req_device.run_process(req_process, req_timeout, req_rate)
+                        reply_string = "Processed request from %s. %s at address %s blinked for %s seconds. \
                                         " % (client_address.decode(),req_alias, req_address, req_timeout)
 
                 if req_msg_val == "CONFIG":
