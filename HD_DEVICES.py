@@ -99,9 +99,10 @@ class HdLed(HdDevice):
     def run_process(self, process, timeout=60, rate=5):
 
         if process == "BLINK":
-            self.blink(timeout,rate)
+            status = self.blink(timeout,rate)
             self.status = "OFF"
-
+        return status
+    
     def turn_on(self):
         GPIO.output(self.pin, GPIO.HIGH)
         self.status = "ON"

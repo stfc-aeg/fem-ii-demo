@@ -66,10 +66,12 @@ class IpcClient:
         reply = IpcMessage(from_str=reply)
         print("Received Response: %s" % reply.get_param("REPLY"))
 
+    """
     def recv_ack(self):
-        pass
-        #ack = self.subscribe.recv_string()
-        #print("Received Response: %s" % ack)
+        
+        ack = self.subscribe.recv_string()
+        print("Received Response: %s" % ack)
+    """
 
     def form_ipc_msg(self, msgType, msgVal, msgDevice, msgConfig, msgProcess, options={}):
         """ Forms and returns an encoded IPC Message
