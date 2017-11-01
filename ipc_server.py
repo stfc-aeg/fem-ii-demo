@@ -91,6 +91,7 @@ class IpcServer:
             req_device.run_process(process, req_timeout, req_rate)
             self.thread_return = True
 
+        print (self.thread_return)
     def send_ack(self, client, message):
         pass
         #self.publisher.send_string("%s %s" % (client, message))
