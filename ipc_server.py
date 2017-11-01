@@ -134,8 +134,8 @@ class IpcServer:
                     thread.start()
 
                     if self.thread_return == True:       
-                        reply_string = "Processed request from %s. Started %s process on %s at address %s for %s seconds. \
-                                        " % (client_address.decode(),req_process, req_alias, req_address, req_timeout)
+                        reply_string = "Processed request from %s. Started %s process on %s at address %s. \
+                                        " % (client_address.decode(),req_process, req_alias, req_address)
 
                     
                     """
