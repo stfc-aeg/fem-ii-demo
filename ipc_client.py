@@ -196,7 +196,7 @@ class IpcClient:
                         blink_timeout = input("BLINK TIMEOUT (in seconds), 0 for infinite:" + "\n")
                         while self.isDigit(blink_timeout) == False:
                             blink_timeout = input("Must be a number, BLINK TIMEOUT (in seconds):" + "\n")
-                        if blink_timeout == 0:
+                        if blink_timeout == "0":
                             blink_timeout = None
                         options["blink_timeout"] = blink_timeout
 
@@ -307,7 +307,7 @@ def main():
                     args_config = DEF_POWER_CONFIG
 
             if args.msg_val == "PROCESS" and args.process != None:
-                if args.process == "BLINK":
+                if args.process == "START_BLINK":
                     if args.b_rate == None: 
                         options["blink_rate"] = DEF_BLINK_RATE
                     else:

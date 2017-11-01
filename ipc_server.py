@@ -88,6 +88,8 @@ class IpcServer:
         if process == "BLINK":
             try:
                 req_timeout = request.get_param("TIMEOUT")
+                if req_timeout == None:
+                    print("timeout is none")
                 req_rate = request.get_param("RATE")
                 # Currently not operating as process returns True AFTER process has completed...
                 self.thread_return = req_device.run_process(process, req_timeout, req_rate)
