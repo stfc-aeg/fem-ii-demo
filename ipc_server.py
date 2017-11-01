@@ -135,13 +135,16 @@ class IpcServer:
                     req_process = request.get_param("PROCESS")
 
                     pro_type, req_process = req_process.split("_")
-                    if pro_type == "START" and req_device.process_running == False:
-                        thread = threading.Thread(target=self.run_long_process, args=(req_device, req_process, request, client_address ))
-                        thread.daemon = True
-                        thread.start()
-                        if self.thread_return == True:
+                    if pro_type == "START":
+                        if req_device.process_running == False:
+                            thread = threading.Thread(target=self.run_long_process, args=(req_device, req_process, request, client_address ))
+                            thread.daemon = True
+                            thread.start()
                             reply_string = "Processed request from %s. Started %s process on %s at address %s. \
-                                        " % (client_address.decode(),req_process, req_alias, req_address)
+                                           " % (client_address.decode(),req_process, req_alias, req_address)
+                        else:
+                            reply_string = "Processed request from %s. Process %s on %s at address %s is already running. \
+                                           " % (client_address.decode(),req_process, req_alias, req_address)
                     elif pro_type == "STOP":
                         req_device.stop_process(req_process)
                         reply_string = "Processed request from %s. Stopped %s process on %s at address %s. \
