@@ -101,13 +101,13 @@ class HdLed(HdDevice):
 
         if process == "BLINK":
             self.KEEP_BLINKING = False
-            
+
     def run_process(self, process, timeout=None, rate=1):
         self.process_running = True
 
         if process == "BLINK":
             if timeout == None:
-                self.KEEP_BLINKING == True
+                self.KEEP_BLINKING = True
             status = self.blink(timeout,rate)
             self.status = "OFF"
         return status
