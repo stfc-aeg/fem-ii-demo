@@ -30,7 +30,7 @@ class IpcServer:
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.ROUTER)
         self.socket.setsockopt(zmq.IDENTITY, self.identity.encode())
-        
+        self.thread_return = None
         """
         self.publisher = self.context.socket(zmq.PUB)
         self.publisher.setsockopt(zmq.IDENTITY, self.identity.encode())
@@ -81,17 +81,15 @@ class IpcServer:
 
         return address
 
-    def run_long_process(self, req_device, process, request):
+    def run_long_process(self, req_device, process, request, client_address):
+
+        self.thread_return = False
 
         if process == "BLINK":
             req_timeout = request.get_param("TIMEOUT")
             req_rate = request.get_param("RATE")
             req_device.run_process(process, req_timeout, req_rate)
-        
-        reply_string = "Processed request from %s. Started %s process on %s at address %s for %s seconds. \
-                        " % (client_address.decode(),req_process, req_alias, req_address, req_timeout)
-
-        return reply_string
+            self.thread_return = True
 
     def send_ack(self, client, message):
         pass
@@ -129,9 +127,14 @@ class IpcServer:
 
                 if req_msg_val == "PROCESS":
                     req_process = request.get_param("PROCESS")
-                    thread = threading.Thread(target=self.run_long_process, args=(req_device, req_process, request, ))
+                    thread = threading.Thread(target=self.run_long_process, args=(req_device, req_process, request, client_address ))
                     thread.daemon = True
                     thread.start()
+
+                    if self.thread_return == True:       
+                        reply_string = "Processed request from %s. Started %s process on %s at address %s for %s seconds. \
+                                        " % (client_address.decode(),req_process, req_alias, req_address, req_timeout)
+
                     
                     """
                     if req_process == "BLINK":
