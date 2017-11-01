@@ -88,8 +88,9 @@ class IpcServer:
         if process == "BLINK":
             req_timeout = request.get_param("TIMEOUT")
             req_rate = request.get_param("RATE")
-            req_device.run_process(process, req_timeout, req_rate)
             self.thread_return = True
+            req_device.run_process(process, req_timeout, req_rate)
+            
 
         print (self.thread_return)
     def send_ack(self, client, message):
