@@ -104,6 +104,7 @@ class IpcServer:
                 req_msg_val = request.get_msg_val()
                 req_device = None
                 req_config = None
+                reply_string = None
 
                 reply_message = IpcMessage(msg_type="CMD", msg_val="NOTIFY")
                 
@@ -112,20 +113,22 @@ class IpcServer:
                     if req_address == device.get_addr():
                         req_device = device
 
+                if req_msg_val == "PROCESS":
+                    req_process = request.get_param("PROCESS")
+                        if req_process == "BLINK":
+                            self.send_ack(client_address.decode(), "Starting %s process" % req_process)
+                            req_timeout = request.get_param("TIMEOUT")
+                            req_rate = request.get_param("RATE")
+                            req_device.run_process(req_process, req_timeout, req_rate)
+                            reply_string = "Processed request from %s. %s at address %s blinked for %s seconds. \
+                                        " % (client_address.decode(),req_alias, req_address, req_timeout)
+
                 if req_msg_val == "CONFIG":
                     req_config = request.get_param("CONFIG")
-                    if req_config == "BLINK":
-                        self.send_ack(client_address.decode(), "Starting %s process" % req_config)
-                        req_timeout = request.get_param("TIMEOUT")
-                        req_rate = request.get_param("RATE")
-                        req_device.set_config(req_config, req_timeout, req_rate)
-                        reply_string = "Processed request from %s. %s at address %s blinked for %s seconds. \
-                                        " % (client_address.decode(),req_alias, req_address, req_timeout)
-                    else:
-                        req_device.set_config(req_config)
-                        reply_string = "Processed Request from %s. Set %s at \
-                                        address %s to: %s." % (client_address.decode(),
-                                        req_alias, req_address, req_device.get_config())
+                    req_device.set_config(req_config)
+                    reply_string = "Processed Request from %s. Set %s at \
+                                    address %s to: %s." % (client_address.decode(),
+                                    req_alias, req_address, req_device.get_config())
   
                 if req_msg_val == "STATUS":
                     rep_status = req_device.get_status()

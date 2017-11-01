@@ -44,6 +44,8 @@ class HdDevice:
     def set_config(self, config):
         pass
 
+    def run_process(self, process):
+        pass
 
 class HdLed(HdDevice):
     """ Subclass, extends HD_DEVICE
@@ -80,7 +82,7 @@ class HdLed(HdDevice):
         return self.status
 
    # @ovveride
-    def set_config(self, config, timeout=60, rate=5):
+    def set_config(self, config):
         """ Sets the status of the LED
         
         :param config: ON/OFF status of the LED
@@ -92,7 +94,11 @@ class HdLed(HdDevice):
             GPIO.output(self.pin, GPIO.HIGH)
         elif config == "OFF":
             GPIO.output(self.pin, GPIO.LOW)
-        else:
+        
+
+    def run_process(self, process, timeout=60, rate=5):
+
+        if process == "BLINK":
             self.blink(timeout,rate)
             self.status = "OFF"
 
