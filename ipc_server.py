@@ -83,19 +83,18 @@ class IpcServer:
 
     def run_long_process(self, req_device, process, request, client_address):
 
-        self.thread_return = False
+        self.thread_return = None
 
         if process == "BLINK":
             req_timeout = request.get_param("TIMEOUT")
             req_rate = request.get_param("RATE")
-            self.thread_return = True
-            req_device.run_process(process, req_timeout, req_rate)
-            
-
-        print (self.thread_return)
+            self.thread_return = req_device.run_process(process, req_timeout, req_rate)
+        
+            print(self.thread_return)
+    """
     def send_ack(self, client, message):
-        pass
-        #self.publisher.send_string("%s %s" % (client, message))
+        self.publisher.send_string("%s %s" % (client, message))
+    """
 
     def run_rep(self):
         ''' sends a request, waits for a reply, returns response  '''

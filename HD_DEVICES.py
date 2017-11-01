@@ -102,18 +102,28 @@ class HdLed(HdDevice):
             self.blink(timeout,rate)
             self.status = "OFF"
 
-    def blink(self, timeout, rate):
-        start = time.time()
-        end = start + float(timeout)
-        while time.time() < end:
-            GPIO.output(self.pin, GPIO.HIGH)
-            self.status = "ON"
-            time.sleep(float(rate))
-            GPIO.output(self.pin, GPIO.LOW)
-            self.status = "OFF"
-            time.sleep(float(rate))
+    def turn_on(self):
+        GPIO.output(self.pin, GPIO.HIGH)
+        self.status = "ON"
 
+    def turn_off(self):
+        GPIO.output(self.pin, GPIO.LOW)
         self.status = "OFF"
+
+    def blink(self, timeout, rate):
+        try:
+            start = time.time()
+            end = start + float(timeout)
+            while time.time() < end:
+                self.turn_on()
+                time.sleep(float(rate))
+                self.turn_off()
+                time.sleep(float(rate))
+
+            self.status = "OFF"
+            return True
+        except ValueError:
+            return False
 
 class HdTemp(HdDevice):
     """ Subclass, extends HD_DEVICE
