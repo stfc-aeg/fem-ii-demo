@@ -16,12 +16,12 @@ MSG_TYPES = {"CMD"}
 MSG_VALS = {"STATUS", "CONFIG", "READ", "PROCESS"}
 HD_DEVICES = {"LED", "TEMP", "POWER"}
 LED_STATES = {"ON", "OFF"}
-PROCESSES = {"LED":"BLINK"}
+PROCESSES = {"LED": ["START_BLINK", "STOP_BLINK"]}
 TEMP_STATES = {"C", "F"}
 VOLT_STATES = {"5", "3.3"}
 
 DEF_BLINK_RATE = "1"
-DEF_BLINK_TIMEO = "10"
+DEF_BLINK_TIMEO = None
 DEF_POWER_CONFIG = "5"
 DEF_LED_CONFIG = "ON"
 DEF_TEMP_CONFIG = "C"
@@ -192,17 +192,19 @@ class IpcClient:
                     while msg_process not in PROCESSES[msg_device]:
                         msg_process = input("No such process for the device. PROCESS:" + "\n")
                     
-                    if msg_process == "BLINK":
-                        blink_timeout = input("BLINK TIMEOUT (in seconds):" + "\n")
+                    if msg_process == "START_BLINK":
+                        blink_timeout = input("BLINK TIMEOUT (in seconds), 0 for infinite:" + "\n")
                         while self.isDigit(blink_timeout) == False:
                             blink_timeout = input("Must be a number, BLINK TIMEOUT (in seconds):" + "\n")
+                        if blink_timeout == 0:
+                            blink_timeout = None
                         options["blink_timeout"] = blink_timeout
 
                         blink_rate = input("BLINK RATE (in seconds):" + "\n")
                         while self.isDigit(blink_rate) == False:
                             blink_rate = input("Must be a number, BLINK RATE(in seconds):" + "\n")
                         options["blink_rate"] = blink_rate
-
+                    
                 request = self.form_ipc_msg(msg_type, msg_val, 
                                             msg_device, msg_config, msg_process, options)
                 self.socket.send(request)
@@ -215,13 +217,15 @@ class IpcClient:
 def main():
 
     options = {}
+    processes = [value for key, value in PROCESSES.items()]
+    processes = [item for sublist in processes for item in sublist]
 
     """ 
         Define arguments for a one-shot client request 
         (URL, PORT, TYPE, VAL, DEVICE, CONFIG, OPTIONS)
     """
-
     parser = argparse.ArgumentParser()
+
     parser.add_argument("-url", "--url", help="Remote server url, \
                         default = tcp://localhost", default="tcp://localhost")
     parser.add_argument("-port", "--port", help="Port connection, default = 5555", 
@@ -233,7 +237,7 @@ def main():
     parser.add_argument("-device", "--device", help="Target device, accepts: %s " 
                         % HD_DEVICES, choices=HD_DEVICES)
     parser.add_argument("-process", "--process", help="Process to be performed, accepts: %s." 
-                        % PROCESSES, choices=[value for key, value in PROCESSES.items()], default=None)
+                        % PROCESSES, choices=processes, default=None)
     parser.add_argument("-led_config", "--led_config", 
                         help="LED device configuration option, accepts: %s. Default = ON" 
                         % LED_STATES, choices=LED_STATES, default=None)
@@ -244,10 +248,10 @@ def main():
                         help="Power device configuration option, accepts: %s. Default = 5V" 
                         % VOLT_STATES, choices=VOLT_STATES, default=None)
     parser.add_argument("-b_timeout", "--b_timeout", 
-                        help="Timeout for BLINK call, must be in seconds. Default = 10", 
+                        help="Timeout for START_BLINK call, must be in seconds. Default = Infinite", 
                         type=float, default=None)
     parser.add_argument("-b_rate", "--b_rate", 
-                        help="Blink rate for BLINK call, must be in seconds. Default = 1",
+                        help="Blink rate for START_BLINK call, must be in seconds. Default = 1",
                         type=float, default=None)                 
     args = parser.parse_args()
 

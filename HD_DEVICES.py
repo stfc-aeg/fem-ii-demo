@@ -61,6 +61,8 @@ class HdLed(HdDevice):
         HdDevice.__init__(self, status, address, alias)
         self.pin = pin
         GPIO.setup(self.pin, GPIO.OUT)
+        self.KEEP_BLINKING = False
+        self.process_running = False
 
     # @ovveride
     def get_data(self):
@@ -95,14 +97,21 @@ class HdLed(HdDevice):
         elif config == "OFF":
             GPIO.output(self.pin, GPIO.LOW)
         
-
-    def run_process(self, process, timeout=60, rate=5):
+    def stop_process(self, process):
 
         if process == "BLINK":
+            self.KEEP_BLINKING = False
+            
+    def run_process(self, process, timeout=None, rate=1):
+        self.process_running = True
+
+        if process == "BLINK":
+            if timeout == None:
+                self.KEEP_BLINKING == True
             status = self.blink(timeout,rate)
             self.status = "OFF"
         return status
-    
+
     def turn_on(self):
         GPIO.output(self.pin, GPIO.HIGH)
         self.status = "ON"
@@ -113,15 +122,23 @@ class HdLed(HdDevice):
 
     def blink(self, timeout, rate):
         try:
-            start = time.time()
-            end = start + float(timeout)
-            while time.time() < end:
-                self.turn_on()
-                time.sleep(float(rate))
-                self.turn_off()
-                time.sleep(float(rate))
+            if timeout == None:
+                while self.KEEP_BLINKING:
+                    self.turn_on()
+                    time.sleep(float(rate))
+                    self.turn_off()
+                    time.sleep(float(rate))
+            else:
+                start = time.time()
+                end = start + float(timeout)
+                while time.time() < end:
+                    self.turn_on()
+                    time.sleep(float(rate))
+                    self.turn_off()
+                    time.sleep(float(rate))
 
             self.status = "OFF"
+            self.process_running = False
             return True
         except ValueError:
             return False

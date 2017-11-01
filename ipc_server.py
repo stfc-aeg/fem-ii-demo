@@ -83,14 +83,14 @@ class IpcServer:
 
     def run_long_process(self, req_device, process, request, client_address):
 
-        self.thread_return = None
+        self.thread_return = True
 
         if process == "BLINK":
             req_timeout = request.get_param("TIMEOUT")
             req_rate = request.get_param("RATE")
+            # Currently not operating as process returns True AFTER process has completed...
             self.thread_return = req_device.run_process(process, req_timeout, req_rate)
-        
-            print(self.thread_return)
+            
     """
     def send_ack(self, client, message):
         self.publisher.send_string("%s %s" % (client, message))
@@ -128,10 +128,14 @@ class IpcServer:
 
                 if req_msg_val == "PROCESS":
                     req_process = request.get_param("PROCESS")
-                    thread = threading.Thread(target=self.run_long_process, args=(req_device, req_process, request, client_address ))
-                    thread.daemon = True
-                    thread.start()
 
+                    pro_type, req_process = req_process.split("_")
+                    if pro_type == "START" and req_device.process_running == False:
+                        thread = threading.Thread(target=self.run_long_process, args=(req_device, req_process, request, client_address ))
+                        thread.daemon = True
+                        thread.start()
+                    elif pro_type == "STOP":
+                        req_device.stop_process(req_process)
                     if self.thread_return == True:       
                         reply_string = "Processed request from %s. Started %s process on %s at address %s. \
                                         " % (client_address.decode(),req_process, req_alias, req_address)
