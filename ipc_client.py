@@ -93,7 +93,7 @@ class IpcClient:
             request.set_param("PROCESS", msgProcess)
             self.WAIT_FOR_ACK = True
 
-            if msgProcess == "BLINK":
+            if msgProcess == "START_BLINK":
                 request.set_param("TIMEOUT", options["blink_timeout"])
                 request.set_param("RATE", options["blink_rate"])
 

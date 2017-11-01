@@ -83,14 +83,17 @@ class IpcServer:
 
     def run_long_process(self, req_device, process, request, client_address):
 
-        self.thread_return = True
+        self.thread_return = None
 
         if process == "BLINK":
-            req_timeout = request.get_param("TIMEOUT")
-            req_rate = request.get_param("RATE")
-            # Currently not operating as process returns True AFTER process has completed...
-            self.thread_return = req_device.run_process(process, req_timeout, req_rate)
-            
+            try:
+                req_timeout = request.get_param("TIMEOUT")
+                req_rate = request.get_param("RATE")
+                # Currently not operating as process returns True AFTER process has completed...
+                self.thread_return = req_device.run_process(process, req_timeout, req_rate)
+            except IpcMessageException as e:
+                self.thread_return = False
+                
     """
     def send_ack(self, client, message):
         self.publisher.send_string("%s %s" % (client, message))
@@ -117,7 +120,7 @@ class IpcServer:
                 req_msg_val = request.get_msg_val()
                 req_device = None
                 req_config = None
-                reply_string = "Internal Error, No matching server commands"
+                reply_string = "Internal Error"
 
                 reply_message = IpcMessage(msg_type="CMD", msg_val="NOTIFY")
                 
@@ -134,11 +137,15 @@ class IpcServer:
                         thread = threading.Thread(target=self.run_long_process, args=(req_device, req_process, request, client_address ))
                         thread.daemon = True
                         thread.start()
+                        if self.thread_return == True:
+                            reply_string = "Processed request from %s. Started %s process on %s at address %s. \
+                                        " % (client_address.decode(),req_process, req_alias, req_address)
                     elif pro_type == "STOP":
                         req_device.stop_process(req_process)
-                    if self.thread_return == True:       
-                        reply_string = "Processed request from %s. Started %s process on %s at address %s. \
+                        reply_string = "Processed request from %s. Stopped %s process on %s at address %s. \
                                         " % (client_address.decode(),req_process, req_alias, req_address)
+                           
+                        
 
                     
                     """
