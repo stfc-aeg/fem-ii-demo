@@ -150,7 +150,7 @@ class I2cHdLed(HdLed):
 
      def __init__(self, status="OFF", 
                 address="NONE", alias="I2C_LED_R", pin=None):
-        """ Subclass constructor """
+         #Subclass constructor
         
         HdLed.__init__(self, status, address, alias, pin)
 
