@@ -86,7 +86,7 @@ class IpcServer:
         if process == "BLINK":
             req_timeout = request.get_param("TIMEOUT")
             req_rate = request.get_param("RATE")
-            req_device.run_process(req_process, req_timeout, req_rate)
+            req_device.run_process(process, req_timeout, req_rate)
         
         reply_string = "Processed request from %s. Started %s process on %s at address %s for %s seconds. \
                         " % (client_address.decode(),req_process, req_alias, req_address, req_timeout)
