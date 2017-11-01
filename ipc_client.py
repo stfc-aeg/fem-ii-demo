@@ -40,15 +40,17 @@ class IpcClient:
         self.socket = self.context.socket(zmq.DEALER)
         self.socket.setsockopt(zmq.IDENTITY, self.identity.encode())
         
+        """
         self.subscribe = self.context.socket(zmq.SUB)
         self.WAIT_FOR_ACK = False
+        """
 
     def connect(self):
         """ Connect the socket """
         self.socket.connect(self.url)
 
-        self.subscribe.connect("%s:5556" % self.tcp)
-        self.subscribe.setsockopt_string(zmq.SUBSCRIBE, self.identity)
+        #self.subscribe.connect("%s:5556" % self.tcp)
+        #self.subscribe.setsockopt_string(zmq.SUBSCRIBE, self.identity)
 
     def recv_reply(self):
         """ Receive reply from ZMQ socket
@@ -65,9 +67,9 @@ class IpcClient:
         print("Received Response: %s" % reply.get_param("REPLY"))
 
     def recv_ack(self):
-
-        ack = self.subscribe.recv_string()
-        print("Received Response: %s" % ack)
+        pass
+        #ack = self.subscribe.recv_string()
+        #print("Received Response: %s" % ack)
 
     def form_ipc_msg(self, msgType, msgVal, msgDevice, msgConfig, msgProcess, options={}):
         """ Forms and returns an encoded IPC Message
@@ -132,8 +134,8 @@ class IpcClient:
         if run_once == True:
             request = self.form_ipc_msg(msgType, msgVal, msgDevice, msgConfig, msgProcess, options)
             self.socket.send(request)
-            if self.WAIT_FOR_ACK:
-                self.recv_ack()
+            #if self.WAIT_FOR_ACK:
+                #self.recv_ack()
             self.recv_reply()
 
         else:
@@ -203,8 +205,8 @@ class IpcClient:
                                             msg_device, msg_config, msg_process, options)
                 self.socket.send(request)
 
-                if self.WAIT_FOR_ACK:
-                    self.recv_ack()
+                #if self.WAIT_FOR_ACK:
+                    #self.recv_ack()
                 self.recv_reply()
 
 
@@ -279,58 +281,36 @@ def main():
             parser.error("Process requested but no process selected")
 
         else:
-            args.temp_config = DEF_TEMP_CONFIG
-            args.power_config = DEF_POWER_CONFIG
-            args.led_config = DEF_LED_CONFIG
-            args.b_rate = DEF_BLINK_RATE
-            args.b_timeout = DEF_BLINK_TIMEO
-
             RUN_ONCE = True
 
             if args.device == "LED":
-                args_config = args.led_config
+                if args.led_config !=None:
+                    args_config = args.led_config
+                else:
+                    args_config = DEF_LED_CONFIG
+
             elif args.device == "TEMP":
-                args_config = args.temp_config
+                if args.temp_config != None:
+                    args_config = args.temp_config
+                else:
+                    args_config = DEF_TEMP_CONFIG
             else:
-                args_config = args.power_config
+                if args.power_config != None:
+                    args_config = args.power_config
+                else:
+                    args_config = DEF_POWER_CONFIG
 
             if args.msg_val == "PROCESS" and args.process != None:
                 if args.process == "BLINK":
-                    options["blink_timeout"] = args.b_timeout
-                    options["blink_rate"] = args.b_rate
+                    if args.b_rate == None: 
+                        options["blink_rate"] = DEF_BLINK_RATE
+                    else:
+                        options["blink_rate"] = args.b_rate
+                    if args.b_timeout == None:
+                        options["blink_timeout"] = DEF_BLINK_TIMEO
+                    else:
+                        options["blink_timeout"] = args.b_timeout
 
-    """
-    arg_length = 0
-    for arg in vars(args):
-        if getattr(args, arg) != None:
-            arg_length += 1
-        print (arg, getattr(args, arg))
-    print (arg_length)
-
-    
-    else:
-        # A proper message has been provided, run_once is true
-        run_once = True
-        if arg_length == 2 and args.url != None and args.port != None:
-            run_once = False
-   
-        client = IpcClient(args.url, args.port)
-        client.connect()
-
-        # Assign the config argument depending on the device given
-        b_timeout = None
-        b_rate = None
-        if args.device == "LED":
-            _config = args.led_config
-            if _config == "BLINK":
-                options["blink_timeout"] = args.b_timeout
-                options["blink_rate"] = args.b_rate
-        elif args.device == "TEMP":
-            _config = args.temp_config
-        else:
-            _config = args.power_config
-        
-    """
     print(RUN_ONCE)
     client.run_req(RUN_ONCE, args.msg_type, 
                         args.msg_val, args.device, 

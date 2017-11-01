@@ -8,6 +8,7 @@
 
 import zmq
 import time
+import threading
 import argparse
 from odin_data.ipc_message import IpcMessage, IpcMessageException
 from HD_DEVICES import HdLed, HdPower, HdTemp
@@ -15,7 +16,7 @@ from zmq.utils.strtypes import unicode, cast_bytes
 
 
 MSG_TYPES = {"CMD"}
-MSG_VALS = {"STATUS", "CONFIG", "NOTIFY"}
+MSG_VALS = {"STATUS", "READ", "PROCESS",  "CONFIG", "NOTIFY"}
 HD_ADDR = {"0X01", "0X02", "0X03"}
 
 
@@ -30,9 +31,10 @@ class IpcServer:
         self.socket = self.context.socket(zmq.ROUTER)
         self.socket.setsockopt(zmq.IDENTITY, self.identity.encode())
         
+        """
         self.publisher = self.context.socket(zmq.PUB)
         self.publisher.setsockopt(zmq.IDENTITY, self.identity.encode())
-
+        """
         
         self.address_pool = ["0X01", "0X02", "0X03", "0X04", "0X05"]
         self.devices = [HdLed(), HdTemp(), HdPower()]
@@ -41,7 +43,7 @@ class IpcServer:
     def bind(self):
         """ binds both of the zmq sockets """
         self.socket.bind(self.url)
-        self.publisher.bind("tcp://*:5556")
+        #self.publisher.bind("tcp://*:5556")
 
     def assign_addresses(self):
         ''' Assign addresses to hardware devices.
@@ -78,10 +80,22 @@ class IpcServer:
                 address = device.get_addr()
 
         return address
-    
-    def send_ack(self, client, message):
 
-        self.publisher.send_string("%s %s" % (client, message))
+    def run_long_process(self, req_device, process, request):
+
+        if process == "BLINK":
+            req_timeout = request.get_param("TIMEOUT")
+            req_rate = request.get_param("RATE")
+            req_device.run_process(req_process, req_timeout, req_rate)
+        
+        reply_string = "Processed request from %s. Started %s process on %s at address %s for %s seconds. \
+                        " % (client_address.decode(),req_process, req_alias, req_address, req_timeout)
+
+        return reply_string
+
+    def send_ack(self, client, message):
+        pass
+        #self.publisher.send_string("%s %s" % (client, message))
 
     def run_rep(self):
         ''' sends a request, waits for a reply, returns response  '''
@@ -104,7 +118,7 @@ class IpcServer:
                 req_msg_val = request.get_msg_val()
                 req_device = None
                 req_config = None
-                reply_string = None
+                reply_string = "Internal Error, No matching server commands"
 
                 reply_message = IpcMessage(msg_type="CMD", msg_val="NOTIFY")
                 
@@ -115,14 +129,19 @@ class IpcServer:
 
                 if req_msg_val == "PROCESS":
                     req_process = request.get_param("PROCESS")
+                    thread = threading.Thread(target=self.run_long_process, args=(req_device, req_process, request, ))
+                    thread.daemon = True
+                    thread.start()
+                    
+                    """
                     if req_process == "BLINK":
                         self.send_ack(client_address.decode(), "Starting %s process" % req_process)
                         req_timeout = request.get_param("TIMEOUT")
                         req_rate = request.get_param("RATE")
                         req_device.run_process(req_process, req_timeout, req_rate)
-                        reply_string = "Processed request from %s. %s at address %s blinked for %s seconds. \
-                                        " % (client_address.decode(),req_alias, req_address, req_timeout)
-
+                        reply_string = "Processed request from %s. Started %s process on %s at address %s for %s seconds. \
+                                        " % (client_address.decode(),req_process, req_alias, req_address, req_timeout)
+                    """
                 if req_msg_val == "CONFIG":
                     req_config = request.get_param("CONFIG")
                     req_device.set_config(req_config)
