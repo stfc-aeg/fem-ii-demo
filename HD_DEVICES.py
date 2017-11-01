@@ -1,7 +1,9 @@
 from random import randint
 import random
 import time
-import Adafruit_BBIO.GPIO as GPIO
+#import Adafruit_BBIO.GPIO as GPIO
+import Adafruit_GPIO as GPIO
+
 
 class HdDevice:
     """ Represents a generic hardware device """
@@ -142,6 +144,18 @@ class HdLed(HdDevice):
             return True
         except ValueError:
             return False
+
+"""
+class I2cHdLed(HdLed):
+
+     def __init__(self, status="OFF", 
+                address="NONE", alias="I2C_LED_R", pin=None):
+        """ Subclass constructor """
+        
+        HdLed.__init__(self, status, address, alias, pin)
+
+"""
+
 
 class HdTemp(HdDevice):
     """ Subclass, extends HD_DEVICE

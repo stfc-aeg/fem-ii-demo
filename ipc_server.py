@@ -83,13 +83,12 @@ class IpcServer:
 
     def run_long_process(self, req_device, process, request, client_address):
 
+        # This makes no sense with more than 1 thread running..
         self.thread_return = None
 
         if process == "BLINK":
             try:
                 req_timeout = request.get_param("TIMEOUT")
-                if req_timeout == None:
-                    print("timeout is none")
                 req_rate = request.get_param("RATE")
                 # Currently not operating as process returns True AFTER process has completed...
                 self.thread_return = req_device.run_process(process, req_timeout, req_rate)
