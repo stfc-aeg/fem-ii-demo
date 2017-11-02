@@ -66,9 +66,9 @@ class HdMcp230xx(HdDevice):
         self.busnum = busnum
 
         if self.model == "MCP23008":
-            self.mcp = MCP.MCP23008(self.address, self.busnum)
+            self.mcp = MCP.MCP23008(self.addr, self.busnum)
         elif self.model == "MCP23017":
-            self.mcp = MCP.MCP23017(self.address, self.busnum)
+            self.mcp = MCP.MCP23017(self.addr, self.busnum)
 
         self.setup_outputs()
         self.devices = [HdLed("OFF", "GP0", "LED_RED", "0", "MCP", self.mcp), HdLed("OFF", "GP1", "LED_YELL", "1", "MCP", self.mcp), HdLed("OFF", "GP0", "LED_GREEN", "2", "MCP", self.mcp)]
