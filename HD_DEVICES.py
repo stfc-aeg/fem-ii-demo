@@ -117,41 +117,6 @@ class HdMcp230xx(HdDevice):
                 return self.process_status[process]
 
 
-class I2cHdLed(HdLed):
-
-    def __init__(self, status="OFF", 
-                address="GP0", alias="LED_RED", pin="0", mcp=None):
-        """ Subclass constructor """
-        
-        HdLed.__init__(self, status, address, alias, pin)
-        self.mcp = mcp
-        self.KEEP_BLINKING = False
-        self.process_status = {"BLINK": False}
-
-
-     # @ovveride
-    def set_config(self, config, alias=None):
-        """ Sets the status of the LED
-        
-        :param config: ON/OFF status of the LED
-        As the LED has no configuration, 
-        sets the status i.e ON/OFF
-        """
-        self.status = config
-        if config == "ON":
-            self.mcp.output(self.pin, 1)
-        elif config == "OFF":
-            self.mcp.output(self.pin, 0)
-       
-    def turn_on(self):
-        self.mcp.output(self.pin, 1)
-        self.status = "ON"
-
-    def turn_off(self):
-        self.mcp.output(self.pin, 0)
-        self.status = "OFF"
-
-
 
 class HdLed(HdDevice):
     """ Subclass, extends HD_DEVICE
@@ -358,3 +323,40 @@ class HdPower(HdDevice):
         """ Return the voltage configuration"""
 
         return self.config + "V"
+
+
+
+class I2cHdLed(HdLed):
+
+    def __init__(self, status="OFF", 
+                address="GP0", alias="LED_RED", pin="0", mcp=None):
+        """ Subclass constructor """
+        
+        HdLed.__init__(self, status, address, alias, pin)
+        self.mcp = mcp
+        self.KEEP_BLINKING = False
+        self.process_status = {"BLINK": False}
+
+
+     # @ovveride
+    def set_config(self, config, alias=None):
+        """ Sets the status of the LED
+        
+        :param config: ON/OFF status of the LED
+        As the LED has no configuration, 
+        sets the status i.e ON/OFF
+        """
+        self.status = config
+        if config == "ON":
+            self.mcp.output(self.pin, 1)
+        elif config == "OFF":
+            self.mcp.output(self.pin, 0)
+       
+    def turn_on(self):
+        self.mcp.output(self.pin, 1)
+        self.status = "ON"
+
+    def turn_off(self):
+        self.mcp.output(self.pin, 0)
+        self.status = "OFF"
+
