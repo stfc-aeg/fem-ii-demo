@@ -115,6 +115,9 @@ class IpcServer:
                 
                 req_alias, sub_device = req_alias.split(".")
 
+                print(req_alias)
+                print(sub_device)
+
                 # get the address of the device
                 req_address = self.process_address(req_alias)
 
@@ -137,6 +140,7 @@ class IpcServer:
                     req_process = request.get_param("PROCESS")
 
                     pro_type, req_process = req_process.split("_")
+
                     if pro_type == "START":
                         if req_device.process_running(req_process, sub_device) == False:
                             thread = threading.Thread(target=self.run_long_process, args=(req_device, req_process, request, sub_device))
