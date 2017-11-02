@@ -91,7 +91,7 @@ class HdMcp230xx(HdDevice):
 
         output = ""
         for device in self.devices: 
-            if device.get_alias == alias:
+            if device.get_alias() == alias:
                 output += "Device %s : %s.\n" % (device.get_alias(), device.get_config())
 
         return output
