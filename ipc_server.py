@@ -119,7 +119,7 @@ class IpcServer:
                 sub_device = None
                 if "." in req_alias:
                     req_alias, sub_device = req_alias.split(".")
-                
+
                 # get the address of the device
                 req_address = self.process_address(req_alias)
 
@@ -175,6 +175,8 @@ class IpcServer:
                     """
                 if req_msg_val == "CONFIG":
                     req_config = request.get_param("CONFIG")
+                    print(req_config)
+                    print(sub_device)
                     req_device.set_config(req_config, sub_device)
                     reply_string = "Processed Request from %s. Set %s at \
                                     address %s to: %s." % (client_address.decode(),
