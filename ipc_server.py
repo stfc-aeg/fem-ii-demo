@@ -11,13 +11,13 @@ import time
 import threading
 import argparse
 from odin_data.ipc_message import IpcMessage, IpcMessageException
-from HD_DEVICES import HdLed, HdPower, HdTemp
+from HD_DEVICES import HdLed, HdPower, HdTemp, HdMcp230xx()
 from zmq.utils.strtypes import unicode, cast_bytes
 
 
 MSG_TYPES = {"CMD"}
 MSG_VALS = {"STATUS", "READ", "PROCESS",  "CONFIG", "NOTIFY"}
-HD_ADDR = {"0X01", "0X02", "0X03"}
+HD_ADDR = {"0X01", "0X02", "0X03", "0X20"}
 
 
 class IpcServer:
@@ -36,8 +36,8 @@ class IpcServer:
         self.publisher.setsockopt(zmq.IDENTITY, self.identity.encode())
         """
         
-        self.address_pool = ["0X01", "0X02", "0X03", "0X04", "0X05"]
-        self.devices = [HdLed(), HdTemp(), HdPower()]
+        self.address_pool = ["0X01", "0X02", "0X03", "0X20"]
+        self.devices = [HdLed(), HdTemp(), HdPower(), HdMcp230xx()]
         self.lookup = {}
 
     def bind(self):
@@ -135,7 +135,7 @@ class IpcServer:
 
                     pro_type, req_process = req_process.split("_")
                     if pro_type == "START":
-                        if req_device.process_running == False:
+                        if req_device.process_running(req_process, req_device.get_alias()) == False:
                             thread = threading.Thread(target=self.run_long_process, args=(req_device, req_process, request, client_address ))
                             thread.daemon = True
                             thread.start()

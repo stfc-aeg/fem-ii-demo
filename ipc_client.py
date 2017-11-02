@@ -91,8 +91,6 @@ class IpcClient:
         
         if msgVal == "PROCESS":
             request.set_param("PROCESS", msgProcess)
-            self.WAIT_FOR_ACK = True
-
             if msgProcess == "START_BLINK":
                 request.set_param("TIMEOUT", options["blink_timeout"])
                 request.set_param("RATE", options["blink_rate"])
@@ -131,20 +129,15 @@ class IpcClient:
         :param options: Dictionary holding configuration or process options.
         
         """
-        self.WAIT_FOR_ACK = False
-        
+
         if run_once == True:
             request = self.form_ipc_msg(msgType, msgVal, msgDevice, msgConfig, msgProcess, options)
             self.socket.send(request)
-            #if self.WAIT_FOR_ACK:
-                #self.recv_ack()
             self.recv_reply()
 
         else:
             #Infinite loop of retrieving user input and running REQ-REP
             while True:
-                
-                self.WAIT_FOR_ACK = False
 
                 print("---------------------------------")
 
@@ -208,9 +201,6 @@ class IpcClient:
                 request = self.form_ipc_msg(msg_type, msg_val, 
                                             msg_device, msg_config, msg_process, options)
                 self.socket.send(request)
-
-                #if self.WAIT_FOR_ACK:
-                    #self.recv_ack()
                 self.recv_reply()
 
 

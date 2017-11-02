@@ -1,8 +1,9 @@
 from random import randint
 import random
 import time
-#import Adafruit_BBIO.GPIO as GPIO
+import Adafruit_BBIO.GPIO as BBGPIO
 import Adafruit_GPIO as GPIO
+import Adafruit_GPIO.MCP230xx as MCP
 
 
 class HdDevice:
@@ -21,33 +22,136 @@ class HdDevice:
         self.addr = address
         self.alias = alias
 
-    def get_status(self):
+    def get_status(self, alias=None):
         return self.status
     
-    def get_addr(self):
+    def get_addr(self, alias=None):
         return self.addr
     
-    def set_status(self, status):
+    def set_status(self, status, alias=None):
         self.status = status
     
-    def set_addr(self, addr):
+    def set_addr(self, addr, alias=None):
         self.addr = addr
  
-    def get_alias(self):
+    def get_alias(self, alias=None):
         return self.alias
 
     #   MUST BE OVERRIDEN 
-    def get_data(self):
+    def get_data(self, alias=None):
         pass
 
-    def get_config(self):
+    def get_config(self, alias=None):
         pass
 
-    def set_config(self, config):
+    def set_config(self, config, alias=None):
         pass
 
-    def run_process(self, process):
+    def run_process(self, process, alias=None):
         pass
+
+class HdMcp230xx(HdDevice):
+
+    RED = 0
+    YELLOW = 1
+    GREEN = 2
+
+    def __init__(self, status="Connected", 
+                address="0X20", alias="MCP230xx", model="MCP23008", busnum="2"):
+        """ Subclass constructor """
+        
+        HdDevice.__init__(self, status, address, alias)
+
+        self.model = model
+        self.busnum = busnum
+
+        if self.model == "MCP23008":
+            self.mcp = MCP.MCP23008(self.address, self.busnum)
+        elif self.model == "MCP23017":
+            self.mcp = MCP.MCP23017(self.address, self.busnum)
+
+        self.setup_outputs()
+        self.devices = [HdLed("OFF", "GP0", "LED_RED", "0", "MCP", self.mcp), HdLed("OFF", "GP1", "LED_YELL", "1", "MCP", self.mcp), HdLed("OFF", "GP0", "LED_GREEN", "2", "MCP", self.mcp)]
+
+    def setup_outputs(self, pins=[0,1,2]):
+
+        for pin in pins:
+            self.mcp.setup(pin, GPIO.OUT)
+
+    #   MUST BE OVERRIDEN 
+    def get_data(self, alias=None):
+
+        output = ""
+        for device in self.devices:
+            output += "Device %s : %s.\n" % (device.get_alias(), device.get_data())
+
+        return output
+
+    def get_config(self, alias=None):
+
+        output = ""
+        for device in self.devices: 
+            output += "Device %s : %s.\n" % (device.get_alias(), device.get_config())
+
+        return output
+        
+    def set_config(self, config, alias="LED_RED"):
+
+        for device in self.devices: 
+            if device.get_alias == alias:
+                device.set_config(config)
+                
+
+    def run_process(self, process, timeout=None, rate=None, alias="LED_RED"):
+
+        for device in self.devices: 
+            if device.get_alias == alias:
+                if device.process_running == False:
+                    device.run_process(process, timeout, rate)
+
+
+    def process_running(process, alias="LED_RED"):
+
+        for device in self.devices:
+            if device.get_alias() == alias:
+                return self.process_status[process]
+
+
+class I2cHdLed(HdLed):
+
+    def __init__(self, status="OFF", 
+                address="GP0", alias="LED_RED", pin="0", mcp=None):
+        """ Subclass constructor """
+        
+        HdLed.__init__(self, status, address, alias, pin)
+        self.mcp = mcp
+        self.KEEP_BLINKING = False
+        self.process_status = {"BLINK": False}
+
+
+     # @ovveride
+    def set_config(self, config, alias=None):
+        """ Sets the status of the LED
+        
+        :param config: ON/OFF status of the LED
+        As the LED has no configuration, 
+        sets the status i.e ON/OFF
+        """
+        self.status = config
+        if config == "ON":
+            self.mcp.output(self.pin, 1)
+        elif config == "OFF":
+            self.mcp.output(self.pin, 0)
+       
+    def turn_on(self):
+        self.mcp.output(self.pin, 1)
+        self.status = "ON"
+
+    def turn_off(self):
+        self.mcp.output(self.pin, 0)
+        self.status = "OFF"
+
+
 
 class HdLed(HdDevice):
     """ Subclass, extends HD_DEVICE
@@ -57,17 +161,21 @@ class HdLed(HdDevice):
     
     """
     def __init__(self, status="OFF", 
-                address="0X01", alias="LED", pin="P8_10"):
+                address="0X01", alias="LED", pin="P8_10", mode="GPIO", mcp=None):
         """ Subclass constructor """
         
         HdDevice.__init__(self, status, address, alias)
         self.pin = pin
-        GPIO.setup(self.pin, GPIO.OUT)
+        self.mode = mode
+        if mcp != None:
+            self.mcp = mcp
+        if mode == "GPIO":
+            BBGPIO.setup(self.pin, BBGPIO.OUT)
         self.KEEP_BLINKING = False
-        self.process_running = False
+        self.process_status = {"BLINK": False}
 
     # @ovveride
-    def get_data(self):
+    def get_data(self, alias=None):
         """ Returns the status of the LED
          
         As LED has no data, returns the status
@@ -76,7 +184,7 @@ class HdLed(HdDevice):
         return self.status
 
     # @ovveride    
-    def get_config(self):
+    def get_config(self, alias=None):
         """ Returns the status of the LED
 
         As LED has no specific configuration 
@@ -86,7 +194,7 @@ class HdLed(HdDevice):
         return self.status
 
    # @ovveride
-    def set_config(self, config):
+    def set_config(self, config, alias=None):
         """ Sets the status of the LED
         
         :param config: ON/OFF status of the LED
@@ -95,18 +203,25 @@ class HdLed(HdDevice):
         """
         self.status = config
         if config == "ON":
-            GPIO.output(self.pin, GPIO.HIGH)
+            if self.mode == "MCP":
+                self.mcp.output(self.pin, 1)
+            else:
+                BBGPIO.output(self.pin, BBGPIO.HIGH)
         elif config == "OFF":
-            GPIO.output(self.pin, GPIO.LOW)
+            if self.mode == "MCP":
+                self.mcp.output(self.pin, 0)
+            else:
+                BBGPIO.output(self.pin, BBGPIO.LOW)
         
-    def stop_process(self, process):
+    def stop_process(self, process, alias=None):
 
+        self.process_status[process] = False
         if process == "BLINK":
             self.KEEP_BLINKING = False
-
-    def run_process(self, process, timeout=None, rate=1):
-        self.process_running = True
-
+        
+    def run_process(self, process, timeout=None, rate=1, alias=None):
+       
+        self.process_status[process] = True
         if process == "BLINK":
             if timeout == None:
                 self.KEEP_BLINKING = True
@@ -115,11 +230,17 @@ class HdLed(HdDevice):
         return status
 
     def turn_on(self):
-        GPIO.output(self.pin, GPIO.HIGH)
+        if self.mode == "MCP":
+            self.mcp.output(self.pin, 1)
+        else:
+            BBGPIO.output(self.pin, BBGPIO.HIGH)
         self.status = "ON"
 
     def turn_off(self):
-        GPIO.output(self.pin, GPIO.LOW)
+        if self.mode == "MCP":
+            self.mcp.output(self.pin, 0)
+        else:
+            BBGPIO.output(self.pin, BBGPIO.LOW)
         self.status = "OFF"
 
     def blink(self, timeout, rate):
@@ -145,16 +266,9 @@ class HdLed(HdDevice):
         except ValueError:
             return False
 
-"""
-class I2cHdLed(HdLed):
+    def process_running(process, alias=None):
 
-     def __init__(self, status="OFF", 
-                address="NONE", alias="I2C_LED_R", pin=None):
-         #Subclass constructor
-        
-        HdLed.__init__(self, status, address, alias, pin)
-
-"""
+        return self.process_status[process]
 
 
 class HdTemp(HdDevice):
@@ -176,7 +290,7 @@ class HdTemp(HdDevice):
         self.fc = fc
 
     # @ovveride
-    def get_data(self):
+    def get_data(self, alias=None):
         """ Returns the current temperature reading
         
         Reading is provided in relation to degrees
@@ -191,7 +305,7 @@ class HdTemp(HdDevice):
             return str(self.temp) + " " + self.fc
 
     # @ovveride
-    def set_config(self, fc):
+    def set_config(self, fc, alias=None):
         """ Sets the degree configuration
         
         :param fc: Farenheit or Celcius config option
@@ -199,7 +313,7 @@ class HdTemp(HdDevice):
         self.fc = fc   
 
     # @ovveride
-    def get_config(self):
+    def get_config(self, alias=None):
         """ Returns the current degrees configuration"""
 
         return self.fc
@@ -222,7 +336,7 @@ class HdPower(HdDevice):
         self.config = config
 
     # @ovveride
-    def get_data(self):
+    def get_data(self, alias=None):
         """ Returns the current voltage """
 
         #Read a fake voltage reading around the current voltage config
@@ -232,7 +346,7 @@ class HdPower(HdDevice):
         return str(fake_volts) + "V"
 
     # @ovveride
-    def set_config(self, config):
+    def set_config(self, config, alias=None):
         """ Set the voltage to 3.3 or 5
         
         :param config: voltage setting, 3.3 or 5volts
@@ -240,7 +354,7 @@ class HdPower(HdDevice):
         self.config = config
 
     # @ovveride
-    def get_config(self):
+    def get_config(self, alias=None):
         """ Return the voltage configuration"""
 
         return self.config + "V"
