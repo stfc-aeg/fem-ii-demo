@@ -82,6 +82,9 @@ class IpcServer:
 
     def run_long_process(self, req_device, process, request, sub_device):
 
+        print(req_device)
+        print(process)
+        print(sub_device)
         # This makes no sense with more than 1 thread running..
         self.thread_return = None
 
