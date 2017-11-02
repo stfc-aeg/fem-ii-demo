@@ -66,7 +66,7 @@ class IpcServer:
             alias = device.get_alias()
             self.lookup[alias] = address
 
-    def process_address(self, request):
+    def process_address(self, alias):
         ''' Return the address of the alias in request
         
         :param request: the IPCmessage from the client request
@@ -74,14 +74,13 @@ class IpcServer:
 
         '''
 
-        _alias = request.get_param("DEVICE")
         for device in self.devices:
-            if _alias == device.get_alias():
+            if alias == device.get_alias():
                 address = device.get_addr()
 
         return address
 
-    def run_long_process(self, req_device, process, request, client_address):
+    def run_long_process(self, req_device, process, request, sub_device):
 
         # This makes no sense with more than 1 thread running..
         self.thread_return = None
@@ -91,7 +90,7 @@ class IpcServer:
                 req_timeout = request.get_param("TIMEOUT")
                 req_rate = request.get_param("RATE")
                 # Currently not operating as process returns True AFTER process has completed...
-                self.thread_return = req_device.run_process(process, req_timeout, req_rate)
+                self.thread_return = req_device.run_process(process, req_timeout, req_rate, sub_device)
             except IpcMessageException as e:
                 self.thread_return = False
                 
@@ -114,17 +113,21 @@ class IpcServer:
                 # Get the alias device name used in the request
                 req_alias = request.get_param("DEVICE")
                 
+                req_alias, sub_device = req_alias.split(".")
+
                 # get the address of the device
-                req_address = self.process_address(request)
+                req_address = self.process_address(req_alias)
 
                 # get the message value (CONFIG/STATUS/READ)
                 req_msg_val = request.get_msg_val()
                 req_device = None
                 req_config = None
+                sub_device = None
                 reply_string = "Internal Error"
 
                 reply_message = IpcMessage(msg_type="CMD", msg_val="NOTIFY")
                 
+
                 # Find the device attached to that request address
                 for device in self.devices:
                     if req_address == device.get_addr():
@@ -135,8 +138,8 @@ class IpcServer:
 
                     pro_type, req_process = req_process.split("_")
                     if pro_type == "START":
-                        if req_device.process_running(req_process, req_device.get_alias()) == False:
-                            thread = threading.Thread(target=self.run_long_process, args=(req_device, req_process, request, client_address ))
+                        if req_device.process_running(req_process, sub_device) == False:
+                            thread = threading.Thread(target=self.run_long_process, args=(req_device, req_process, request, sub_device))
                             thread.daemon = True
                             thread.start()
                             reply_string = "Processed request from %s. Started %s process on %s at address %s. \
@@ -145,7 +148,7 @@ class IpcServer:
                             reply_string = "Processed request from %s. Process %s on %s at address %s is already running. \
                                            " % (client_address.decode(),req_process, req_alias, req_address)
                     elif pro_type == "STOP":
-                        req_device.stop_process(req_process)
+                        req_device.stop_process(req_process, sub_device)
                         reply_string = "Processed request from %s. Stopped %s process on %s at address %s. \
                                         " % (client_address.decode(),req_process, req_alias, req_address)
                            
@@ -163,19 +166,19 @@ class IpcServer:
                     """
                 if req_msg_val == "CONFIG":
                     req_config = request.get_param("CONFIG")
-                    req_device.set_config(req_config)
+                    req_device.set_config(req_config, sub_device)
                     reply_string = "Processed Request from %s. Set %s at \
                                     address %s to: %s." % (client_address.decode(),
-                                    req_alias, req_address, req_device.get_config())
+                                    req_alias, req_address, req_device.get_config(sub_device))
   
                 if req_msg_val == "STATUS":
-                    rep_status = req_device.get_status()
+                    rep_status = req_device.get_status(sub_device)
                     reply_string = "Processed Request from %s. Status of %s at \
                                     address %s is: %s." % (client_address.decode(), 
                                     req_alias, req_address, rep_status)
 
                 if req_msg_val == "READ":
-                    rep_value = req_device.get_data()
+                    rep_value = req_device.get_data(sub_device)
                     reply_string = "Processed Request from %s. Value of %s at \
                                     address %s is: %s." % (client_address.decode(), 
                                     req_alias, req_address, rep_value)

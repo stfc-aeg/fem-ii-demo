@@ -14,9 +14,9 @@ from zmq.utils.strtypes import unicode, cast_bytes
 #   Fixed config options for quick validating of user input
 MSG_TYPES = {"CMD"}
 MSG_VALS = {"STATUS", "CONFIG", "READ", "PROCESS"}
-HD_DEVICES = {"LED", "TEMP", "POWER", "MCP"}
+HD_DEVICES = {"LED", "TEMP", "POWER", "MCP.LED_RED", "MCP.LED_YELL", "MCP.LED_GREEN"}
 LED_STATES = {"ON", "OFF"}
-PROCESSES = {"LED": ["START_BLINK", "STOP_BLINK"]}
+PROCESSES = {"LED": ["START_BLINK", "STOP_BLINK"], "MCP.LED_YELL": ["START_BLINK", "STOP_BLINK"], "MCP.LED_RED": ["START_BLINK", "STOP_BLINK"], "MCP.LED_GREEN": ["START_BLINK", "STOP_BLINK"]}
 TEMP_STATES = {"C", "F"}
 VOLT_STATES = {"5", "3.3"}
 

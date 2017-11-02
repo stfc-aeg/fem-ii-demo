@@ -57,7 +57,7 @@ class HdMcp230xx(HdDevice):
     GREEN = 2
 
     def __init__(self, status="Connected", 
-                address="0X20", alias="MCP230xx", model="MCP23008", busnum="2"):
+                address="0X20", alias="MCP", model="MCP23008", busnum="2"):
         """ Subclass constructor """
         
         HdDevice.__init__(self, status, address, alias)
@@ -66,9 +66,9 @@ class HdMcp230xx(HdDevice):
         self.busnum = busnum
 
         if self.model == "MCP23008":
-            self.mcp = MCP.MCP23008(self.addr, self.busnum)
+            self.mcp = MCP.MCP23008(self.addr, busnum=self.busnum)
         elif self.model == "MCP23017":
-            self.mcp = MCP.MCP23017(self.addr, self.busnum)
+            self.mcp = MCP.MCP23017(self.addr, busnum=self.busnum)
 
         self.setup_outputs()
         self.devices = [HdLed("OFF", "GP0", "LED_RED", "0", "MCP", self.mcp), HdLed("OFF", "GP1", "LED_YELL", "1", "MCP", self.mcp), HdLed("OFF", "GP0", "LED_GREEN", "2", "MCP", self.mcp)]
@@ -87,7 +87,7 @@ class HdMcp230xx(HdDevice):
 
         return output
 
-    def get_config(self, alias=None):
+    def get_config(self, alias="LED_RED"):
 
         output = ""
         for device in self.devices: 
