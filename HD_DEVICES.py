@@ -70,12 +70,14 @@ class HdMcp230xx(HdDevice):
         elif self.model == "MCP23017":
             self.mcp = MCP.MCP23017(self.addr, busnum=self.busnum)
 
+        self.pins = [0,1,2]
+
         self.setup_outputs()
         self.devices = [HdLed("OFF", "GP0", "LED_RED", 0, "MCP", self.mcp), HdLed("OFF", "GP1", "LED_YELL", 1, "MCP", self.mcp), HdLed("OFF", "GP0", "LED_GREEN", 2, "MCP", self.mcp)]
 
-    def setup_outputs(self, pins=[0,1,2]):
+    def setup_outputs(self):
 
-        for pin in pins:
+        for pin in self.pins:
             self.mcp.setup(pin, GPIO.OUT)
 
     #   MUST BE OVERRIDEN 
@@ -133,24 +135,26 @@ class HdLed(HdDevice):
         HdDevice.__init__(self, status, address, alias)
         self.pin = pin
         self.mode = mode
-        #if mcp != None:
-            #self.mcp = mcp
+        if mcp != None:
+            self.mcp = mcp
+        """
         self.mcp = MCP.MCP23008(0x20, busnum=2)
         self.pins = [0,1,2]
         self.setup_outputs()
+        """
 
         if mode == "GPIO":
             BBGPIO.setup(self.pin, BBGPIO.OUT)
+
+
         self.KEEP_BLINKING = False
         self.process_status = {"BLINK": False}
-
-        
-
+    """
     def setup_outputs(self):
 
         for pin in self.pins:
             self.mcp.setup(pin, GPIO.OUT)
-
+    """
     # @ovveride
     def get_data(self, alias=None):
         """ Returns the status of the LED
