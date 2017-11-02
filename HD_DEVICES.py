@@ -106,7 +106,7 @@ class HdMcp230xx(HdDevice):
 
         for device in self.devices: 
             if device.get_alias == alias:
-                if device.process_running == False:
+                if device.process_status[process] == False:
                     device.run_process(process, timeout, rate)
 
 
