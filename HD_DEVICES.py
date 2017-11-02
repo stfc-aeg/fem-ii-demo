@@ -135,11 +135,18 @@ class HdLed(HdDevice):
         #if mcp != None:
             #self.mcp = mcp
         self.mcp = MCP.MCP23008(0x20, busnum=2)
+        
+        self.setup_outputs()
 
         if mode == "GPIO":
             BBGPIO.setup(self.pin, BBGPIO.OUT)
         self.KEEP_BLINKING = False
         self.process_status = {"BLINK": False}
+
+     def setup_outputs(self, pins=[0,1,2]):
+
+        for pin in pins:
+            self.mcp.setup(pin, GPIO.OUT)
 
     # @ovveride
     def get_data(self, alias=None):
