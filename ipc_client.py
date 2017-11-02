@@ -165,7 +165,7 @@ class IpcClient:
 
                 # Hard coded configuration processing for different device options 
                 if msg_val == "CONFIG":
-                    if msg_device == "LED":
+                    if "LED" in msg_device:
                         msg_config = input("LED STATE:" + "\n")
                         while msg_config not in LED_STATES:
                             msg_config = input("ON or OFF are the only LED \
