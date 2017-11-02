@@ -110,7 +110,7 @@ class HdMcp230xx(HdDevice):
                     device.run_process(process, timeout, rate)
 
 
-    def process_running(process, alias="LED_RED"):
+    def process_running(self, process, alias="LED_RED"):
 
         for device in self.devices:
             if device.get_alias() == alias:
