@@ -113,10 +113,8 @@ class IpcServer:
                 # Get the alias device name used in the request
                 req_alias = request.get_param("DEVICE")
                 
+                sub_device = None
                 req_alias, sub_device = req_alias.split(".")
-
-                print(req_alias)
-                print(sub_device)
 
                 # get the address of the device
                 req_address = self.process_address(req_alias)
@@ -125,7 +123,7 @@ class IpcServer:
                 req_msg_val = request.get_msg_val()
                 req_device = None
                 req_config = None
-                sub_device = None
+                
                 reply_string = "Internal Error"
 
                 reply_message = IpcMessage(msg_type="CMD", msg_val="NOTIFY")
@@ -135,6 +133,9 @@ class IpcServer:
                 for device in self.devices:
                     if req_address == device.get_addr():
                         req_device = device
+
+                print(req_device)
+                print(sub_device)
 
                 if req_msg_val == "PROCESS":
                     req_process = request.get_param("PROCESS")
@@ -146,8 +147,8 @@ class IpcServer:
                             thread = threading.Thread(target=self.run_long_process, args=(req_device, req_process, request, sub_device))
                             thread.daemon = True
                             thread.start()
-                            reply_string = "Processed request from %s. Started %s process on %s at address %s. \
-                                           " % (client_address.decode(),req_process, req_alias, req_address)
+                            reply_string = "Processed request from %s. Started %s process on %s %s at address %s. \
+                                           " % (client_address.decode(),req_process, req_alias, sub_device, req_address)
                         else:
                             reply_string = "Processed request from %s. Process %s on %s at address %s is already running. \
                                            " % (client_address.decode(),req_process, req_alias, req_address)
