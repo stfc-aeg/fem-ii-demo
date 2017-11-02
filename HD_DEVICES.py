@@ -114,7 +114,7 @@ class HdMcp230xx(HdDevice):
 
         for device in self.devices:
             if device.get_alias() == alias:
-                return self.process_status[process]
+                return device.process_status[process]
 
 
 
