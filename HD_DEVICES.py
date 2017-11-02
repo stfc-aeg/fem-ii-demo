@@ -132,8 +132,10 @@ class HdLed(HdDevice):
         HdDevice.__init__(self, status, address, alias)
         self.pin = pin
         self.mode = mode
-        if mcp != None:
-            self.mcp = mcp
+        #if mcp != None:
+            #self.mcp = mcp
+        self.mcp = MCP.MCP23008(0x20, busnum=2)
+
         if mode == "GPIO":
             BBGPIO.setup(self.pin, BBGPIO.OUT)
         self.KEEP_BLINKING = False
