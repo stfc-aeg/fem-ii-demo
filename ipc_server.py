@@ -117,8 +117,9 @@ class IpcServer:
                 req_alias = request.get_param("DEVICE")
                 
                 sub_device = None
-                req_alias, sub_device = req_alias.split(".")
-
+                if "." in req_alias:
+                    req_alias, sub_device = req_alias.split(".")
+                
                 # get the address of the device
                 req_address = self.process_address(req_alias)
 
