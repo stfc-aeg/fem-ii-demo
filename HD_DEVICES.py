@@ -71,7 +71,7 @@ class HdMcp230xx(HdDevice):
             self.mcp = MCP.MCP23017(self.addr, busnum=self.busnum)
 
         self.setup_outputs()
-        self.devices = [HdLed("OFF", "GP0", "LED_RED", "0", "MCP", self.mcp), HdLed("OFF", "GP1", "LED_YELL", "1", "MCP", self.mcp), HdLed("OFF", "GP0", "LED_GREEN", "2", "MCP", self.mcp)]
+        self.devices = [HdLed("OFF", "GP0", "LED_RED", 0, "MCP", self.mcp), HdLed("OFF", "GP1", "LED_YELL", 1, "MCP", self.mcp), HdLed("OFF", "GP0", "LED_GREEN", 2, "MCP", self.mcp)]
 
     def setup_outputs(self, pins=[0,1,2]):
 
