@@ -231,7 +231,7 @@ class HdLed(HdDevice):
         except ValueError:
             return False
 
-    def process_running(process, alias=None):
+    def process_running(self, process, alias=None):
 
         return self.process_status[process]
 
