@@ -57,7 +57,7 @@ class HdMcp230xx(HdDevice):
     GREEN = 2
 
     def __init__(self, status="Connected", 
-                address="0X20", alias="MCP", model="MCP23008", busnum="2"):
+                address=0X20, alias="MCP", model="MCP23008", busnum=2):
         """ Subclass constructor """
         
         HdDevice.__init__(self, status, address, alias)
