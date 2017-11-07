@@ -114,9 +114,24 @@ class IpcServer:
     def handle_stop_process(self, req_process, req_device):
 
         req_device.stop_process(req_process)
-        reply = "Stopped %s process on %s at address %s. \n" % (req_process, req_device.get_alias(), req_device.get_addr())
-        return reply
+        return  "Stopped %s process on %s at address %s. \n" % (req_process, req_device.get_alias(), req_device.get_addr())
 
+    def handle_config(self, req_device, req_config):
+
+        req_device.set_config(req_config)
+        return "Set %s at %s to: %s. \n" % (req_device.get_alias(), req_device.get_addr(), req_device.get_config())
+
+    def handle_read(self, req_device):
+
+        rep_value = req_device.get_data()
+        return "Value of %s at address %s is: %s." % (req_device.get_alias(), req_device.get_addr(), rep_value)
+
+    def handle_status(self, req_device):
+
+        rep_status = req_device.get_status()
+        return "Status of %s at address %s is: %s." % (req_device.get_alias(), req_device.get_addr(), rep_status)
+
+    
     def run_rep(self):
         ''' sends a request, waits for a reply, returns response  '''
 
@@ -158,20 +173,18 @@ class IpcServer:
                         req_config = request.get_param("CONFIG")
                         for req_device in self.devices:
                             if "LED" in req_device.get_alias():
-                                req_device.set_config(req_config)
-                                reply += "Set %s at %s to: %s. \n" % (req_device.get_alias(), req_device.get_addr(), req_device.get_config())
+                                reply += self.handle_config(req_device, req_config)
                         
                     if req_msg_val == "STATUS":
                         for req_device in self.devices:
                             if "LED" in req_device.get_alias():
-                                rep_status = req_device.get_status()
-                                reply += "Status of %s at address %s is: %s. \n" % (req_device.get_alias(), req_device.get_addr(), rep_status)
+                                reply += self.handle_status(self, req_device)
 
                     if req_msg_val == "READ":
                         for req_device in self.devices:
                             if "LED" in req_device.get_alias():
-                                rep_value = req_device.get_data()
-                                reply += "Value of %s at address %s is: %s. \n" % (req_device.get_alias(), req_device.get_addr(), rep_value)
+                                reply += self.handle_read(req_device)
+                    
                     if reply == "":
                         reply = "Internal error"
 
@@ -196,16 +209,13 @@ class IpcServer:
                             
                     if req_msg_val == "CONFIG":
                         req_config = request.get_param("CONFIG")
-                        req_device.set_config(req_config)
-                        reply += "Set %s at address %s to: %s." % (req_device.get_alias(), req_device.get_addr(), req_device.get_config())
+                        reply += self.handle_config(req_device, req_config)
         
                     if req_msg_val == "STATUS":
-                        rep_status = req_device.get_status()
-                        reply += "Status of %s at address %s is: %s." % (req_device.get_alias(), req_device.get_addr(), rep_status)
-
+                        reply += self.handle_status(self, req_device)
+                        
                     if req_msg_val == "READ":
-                        rep_value = req_device.get_data()
-                        reply += "Value of %s at address %s is: %s." % (req_device.get_alias(), req_device.get_addr(), rep_value)
+                        reply += self.handle_read(req_device)
                     
                     if reply == "":
                         reply = "Internal error"
