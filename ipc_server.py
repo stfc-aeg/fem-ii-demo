@@ -114,7 +114,7 @@ class IpcServer:
                 # Get the alias device name used in the request
                 req_alias = request.get_param("DEVICE")
                 
-                if req_alias != "MULTILED":
+                if req_alias != "LED_MULTI":
                     # get the address of the device
                     req_address = self.process_address(req_alias)
                 else:
@@ -140,7 +140,7 @@ class IpcServer:
 
                     pro_type, req_process = req_process.split("_")
 
-                    if req_alias == "MULTILED":    
+                    if req_alias == "LED_MULTI":    
                         if pro_type == "START":
                             for device in self.devices:
                                 if "LED" in device.get_alias():
