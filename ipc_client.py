@@ -14,7 +14,7 @@ from zmq.utils.strtypes import unicode, cast_bytes
 #   Fixed config options for quick validating of user input
 MSG_TYPES = {"CMD"}
 MSG_VALS = {"STATUS", "CONFIG", "READ", "PROCESS"}
-HD_DEVICES = {"LED_BLUE", "TEMP", "POWER", "LED_RED", "LED_YELLOW", "LED_GREEN", "LED_MULTI"}
+HD_DEVICES = {"LED_BLUE", "TEMP", "POWER", "LED_RED", "LED_YELLOW", "LED_GREEN", "LED_ALL"}
 LED_STATES = {"ON", "OFF"}
 PROCESSES = {"LED": ["START_BLINK", "STOP_BLINK"]}
 TEMP_STATES = {"C", "F"}
@@ -186,12 +186,13 @@ class IpcClient:
                         this_device = "LED"
                     else:
                         this_device = msg_device
-                        try:
-                            while msg_process not in PROCESSES[this_device]:
-                                msg_process = input("No such process for the device. PROCESS:" + "\n")
-                        except KeyError:
-                            print("This device currently has no processes, please enter a different command.")
-                            continue
+                    try:
+                        while msg_process not in PROCESSES[this_device]:
+                            msg_process = input("No such process for the device. PROCESS:" + "\n")
+                    except KeyError:
+                        print("This device currently has no processes, please enter a different command.")
+                        continue
+
                     if msg_process == "START_BLINK":
                         blink_timeout = input("BLINK TIMEOUT (in seconds), 0 for infinite:" + "\n")
                         while self.isDigit(blink_timeout) == False:

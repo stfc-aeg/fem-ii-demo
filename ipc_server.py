@@ -99,7 +99,24 @@ class IpcServer:
             except IpcMessageException as e:
                 self.thread_return = False
               
-                
+    def handle_start_process(self, req_process, req_device, request):
+
+        if req_device.process_running(req_process) == False:
+            thread = threading.Thread(target=self.run_long_process, args=(req_device, req_process, request))
+            thread.daemon = True
+            thread.start()
+            reply = "Started %s process on %s at address %s. \n" % (req_process, req_device.get_alias(), req_device.get_addr())
+        else:
+            reply = "Process %s on %s at address %s is already running.\n" % (req_process, req_device.get_alias(), req_device.get_addr())
+
+        return reply
+
+    def handle_stop_process(self, req_process, req_device):
+
+        req_device.stop_process(req_process)
+        reply = "Stopped %s process on %s at address %s. \n" % (req_process, req_device.get_alias(), req_device.get_addr())
+        return reply
+
     def run_rep(self):
         ''' sends a request, waits for a reply, returns response  '''
 
@@ -120,7 +137,7 @@ class IpcServer:
                 reply_string = "Internal Error"
                 reply_message = IpcMessage(msg_type="CMD", msg_val="NOTIFY")
 
-                if req_alias == "LED_MULTI":
+                if req_alias == "LED_ALL":
                     req_address = req_alias
                     reply = ""
                     if req_msg_val == "PROCESS":
@@ -128,42 +145,35 @@ class IpcServer:
                         pro_type, req_process = req_process.split("_")
 
                         if pro_type == "START":
-                            for device in self.devices:
-                                if "LED" in device.get_alias():
-                                    if device.process_running(req_process) == False:
-                                        thread = threading.Thread(target=self.run_long_process, args=(device, req_process, request))
-                                        thread.daemon = True
-                                        thread.start()
-                                        reply += "Started %s process on %s at address %s. \n" % (req_process, device.get_alias(), device.get_addr())
-                                    else:
-                                        reply += "Process %s on %s at address %s is already running.\n" % (req_process, device.get_alias(), device.get_addr())                                
+                            for req_device in self.devices:
+                                if "LED" in req_device.get_alias():
+                                    reply += self.handle_start_process(req_process, req_device, request):
+
                         elif pro_type == "STOP":
-                            for device in self.devices:
-                                if "LED" in device.get_alias():
-                                    device.stop_process(req_process)
-                                    reply += "Stopped %s process on %s at address %s. \n" % (req_process, device.get_alias(), device.get_addr())
+                            for req_device in self.devices:
+                                if "LED" in req_device.get_alias():
+                                    reply += self.handle_stop_process(req_process, req_device)
                     
                     if req_msg_val == "CONFIG":
                         req_config = request.get_param("CONFIG")
-                        for device in self.devices:
-                            if "LED" in device.get_alias():
-                                device.set_config(req_config)
-                                reply += "Set %s at %s to: %s. \n" % (device.get_alias(),device.get_addr(), device.get_config())
+                        for req_device in self.devices:
+                            if "LED" in req_device.get_alias():
+                                req_device.set_config(req_config)
+                                reply += "Set %s at %s to: %s. \n" % (req_device.get_alias(), req_device.get_addr(), req_device.get_config())
                         
                     if req_msg_val == "STATUS":
-                        for device in self.devices:
-                            if "LED" in device.get_alias():
-                                rep_status = device.get_status()
-                                reply += "Status of %s at address %s is: %s. \n" % (device.get_alias(), device.get_addr(),rep_status)
+                        for req_device in self.devices:
+                            if "LED" in req_device.get_alias():
+                                rep_status = req_device.get_status()
+                                reply += "Status of %s at address %s is: %s. \n" % (req_device.get_alias(), req_device.get_addr(), rep_status)
 
                     if req_msg_val == "READ":
-                        for device in self.devices:
-                            if "LED" in device.get_alias():
-                                rep_value = device.get_data()
-                                reply += "Value of %s at address %s is: %s. \n" % (device.get_alias(), device.get_addr(), rep_value)
+                        for req_device in self.devices:
+                            if "LED" in req_device.get_alias():
+                                rep_value = req_device.get_data()
+                                reply += "Value of %s at address %s is: %s. \n" % (req_device.get_alias(), req_device.get_addr(), rep_value)
                     if reply == "":
-                        reply = "internal error"
-                    reply_string = "Processed Request from %s. %s" % (client_address.decode(), reply)
+                        reply = "Internal error"
 
                 else:
                     reply = ""
@@ -180,37 +190,28 @@ class IpcServer:
                         pro_type, req_process = req_process.split("_")
 
                         if pro_type == "START":
-                            if req_device.process_running(req_process) == False:
-                                thread = threading.Thread(target=self.run_long_process, args=(req_device, req_process, request))
-                                thread.daemon = True
-                                thread.start()
-                                reply_string = "Started %s process on %s at address %s." % (req_process, req_alias, req_address)
-                            else:
-                                reply += "Process %s on %s at address %s is already running." % (req_process, req_alias, req_address)
+                            reply += self.handle_start_process(req_process, req_device, request):
                         elif pro_type == "STOP":
-                            req_device.stop_process(req_process)
-                            reply += "Stopped %s process on %s at address %s." % (req_process, req_alias, req_address)
-      
+                            reply += self.handle_stop_process(req_process, req_device)
+                            
                     if req_msg_val == "CONFIG":
                         req_config = request.get_param("CONFIG")
                         req_device.set_config(req_config)
-                        reply += "Set %s at address %s to: %s." % (req_alias, req_address, req_device.get_config())
+                        reply += "Set %s at address %s to: %s." % (req_device.get_alias(), req_device.get_addr(), req_device.get_config())
         
                     if req_msg_val == "STATUS":
                         rep_status = req_device.get_status()
-                        reply += "Status of %s at address %s is: %s." % (req_alias, req_address, rep_status)
+                        reply += "Status of %s at address %s is: %s." % (req_device.get_alias(), req_device.get_addr(), rep_status)
 
                     if req_msg_val == "READ":
                         rep_value = req_device.get_data()
-                        reply += "Value of %s at address %s is: %s." % (req_alias, req_address, rep_value)
+                        reply += "Value of %s at address %s is: %s." % (req_device.get_alias(), req_device.get_addr(), rep_value)
                     
                     if reply == "":
-                        reply = "internal error"
+                        reply = "Internal error"
 
-                    reply_string = "Processed Request from %s. %s" % (client_address.decode(), reply)
-
-                
-
+                    
+                reply_string = "Processed Request from %s. %s" % (client_address.decode(), reply)
                 reply_message.set_param("REPLY", reply_string)
 
                 # Encode the message for sending
