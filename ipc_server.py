@@ -147,7 +147,7 @@ class IpcServer:
                         if pro_type == "START":
                             for req_device in self.devices:
                                 if "LED" in req_device.get_alias():
-                                    reply += self.handle_start_process(req_process, req_device, request):
+                                    reply += self.handle_start_process(req_process, req_device, request)
 
                         elif pro_type == "STOP":
                             for req_device in self.devices:
@@ -190,7 +190,7 @@ class IpcServer:
                         pro_type, req_process = req_process.split("_")
 
                         if pro_type == "START":
-                            reply += self.handle_start_process(req_process, req_device, request):
+                            reply += self.handle_start_process(req_process, req_device, request)
                         elif pro_type == "STOP":
                             reply += self.handle_stop_process(req_process, req_device)
                             
