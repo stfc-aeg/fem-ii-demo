@@ -14,9 +14,9 @@ from zmq.utils.strtypes import unicode, cast_bytes
 #   Fixed config options for quick validating of user input
 MSG_TYPES = {"CMD"}
 MSG_VALS = {"STATUS", "CONFIG", "READ", "PROCESS"}
-HD_DEVICES = {"LED_BLUE", "TEMP", "POWER", "LED_RED", "LED_YELLOW", "LED_GREEN", "MULTI"}
+HD_DEVICES = {"LED_BLUE", "TEMP", "POWER", "LED_RED", "LED_YELLOW", "LED_GREEN", "MULTI_LED"}
 LED_STATES = {"ON", "OFF"}
-PROCESSES = {"LED": ["START_BLINK", "STOP_BLINK"], "MULTI" : ["START_BLINK", "STOP_BLINK"]}
+PROCESSES = {"LED": ["START_BLINK", "STOP_BLINK"]}
 TEMP_STATES = {"C", "F"}
 VOLT_STATES = {"5", "3.3"}
 
@@ -196,10 +196,12 @@ class IpcClient:
                         if blink_timeout == "0":
                             blink_timeout = None
                         options["blink_timeout"] = blink_timeout
-
-                        blink_rate = input("BLINK RATE (in seconds):" + "\n")
+                        
+                        blink_rate = input("BLINK RATE (in seconds), 0 for random:" + "\n")
                         while self.isDigit(blink_rate) == False:
                             blink_rate = input("Must be a number, BLINK RATE(in seconds):" + "\n")
+                        if blink_rate == "0":
+                            blink_rate = None
                         options["blink_rate"] = blink_rate
                     
                 request = self.form_ipc_msg(msg_type, msg_val, 

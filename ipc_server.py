@@ -85,7 +85,7 @@ class IpcServer:
 
         return address
 
-    def run_long_process(self, req_device, process, request, rando=False):
+    def run_long_process(self, req_device, process, request):
 
         # This makes no sense with more than 1 thread running..
         self.thread_return = None
@@ -93,44 +93,13 @@ class IpcServer:
         if process == "BLINK":
             try:
                 req_timeout = request.get_param("TIMEOUT")
-                if rando == False:
-                    req_rate = request.get_param("RATE")
-                else:
-                    req_rate = random.random()
+                req_rate = request.get_param("RATE")
                 # Currently not operating as process returns True AFTER process has completed...
                 self.thread_return = req_device.run_process(process, req_timeout, req_rate)
             except IpcMessageException as e:
                 self.thread_return = False
-        elif process == "BLINKCOMPLEX":
-            self.blinkComplex(request)        
+              
                 
-    """
-    def send_ack(self, client, message):
-        self.publisher.send_string("%s %s" % (client, message))
-    """
-    def blinkComplex(self, request):
-        try:
-            req_timeout = request.get_param("TIMEOUT")
-            req_rate = request.get_param("RATE")
-            LEDS = []
-
-            for device in self.devices:
-                if "LED" in device.get_alias():
-                    LEDS.append(device)
-
-
-            start = time.time()
-            end = start + float(req_timeout)
-             
-            while time.time() < end:
-                led = random.choice(LEDS)
-                led.set_config("ON")
-                time.sleep(float(req_rate))
-                led.set_config("OFF")
-                time.sleep(float(req_rate))
-        except IpcMessageException as e:
-            self.thread_return = False
-
     def run_rep(self):
         ''' sends a request, waits for a reply, returns response  '''
 
@@ -145,7 +114,7 @@ class IpcServer:
                 # Get the alias device name used in the request
                 req_alias = request.get_param("DEVICE")
                 
-                if req_alias != "MULTI":
+                if req_alias != "MULTILED":
                     # get the address of the device
                     req_address = self.process_address(req_alias)
                 else:
@@ -171,17 +140,27 @@ class IpcServer:
 
                     pro_type, req_process = req_process.split("_")
 
-                    if pro_type == "START":
-                        if req_alias == "MULTI":
+                    if req_alias == "MULTILED":    
+                        if pro_type == "START":
                             for device in self.devices:
                                 if "LED" in device.get_alias():
                                     if device.process_running(req_process) == False:
-                                        thread = threading.Thread(target=self.run_long_process, args=(device, req_process, request, True))
+                                        thread = threading.Thread(target=self.run_long_process, args=(device, req_process, request))
                                         thread.daemon = True
                                         thread.start()
                                         reply_string = "Processed request from %s. Started %s process on %s at address %s. \
                                                         " % (client_address.decode(),req_process, req_alias, req_address)
-                        else:
+                                    else:
+                                        reply_string = "Processed request from %s. Process %s on %s at address %s is already running. \
+                                                        " % (client_address.decode(),req_process, req_alias, req_address)                                
+                        elif pro_type == "STOP":
+                            for device in self.devices:
+                                if "LED" in device.get_alias():
+                                    device.stop_process(req_process)
+                                    reply_string = "Processed request from %s. Stopped %s process on %s at address %s. \
+                                        " % (client_address.decode(), req_process, req_alias, req_address)
+                    else:
+                        if pro_type == "START":
                             if req_device.process_running(req_process) == False:
                                 thread = threading.Thread(target=self.run_long_process, args=(req_device, req_process, request))
                                 thread.daemon = True
@@ -191,9 +170,9 @@ class IpcServer:
                             else:
                                 reply_string = "Processed request from %s. Process %s on %s at address %s is already running. \
                                                 " % (client_address.decode(),req_process, req_alias, req_address)
-                    elif pro_type == "STOP":
-                        req_device.stop_process(req_process)
-                        reply_string = "Processed request from %s. Stopped %s process on %s at address %s. \
+                        elif pro_type == "STOP":
+                            req_device.stop_process(req_process)
+                            reply_string = "Processed request from %s. Stopped %s process on %s at address %s. \
                                         " % (client_address.decode(),req_process, req_alias, req_address)
       
                     """

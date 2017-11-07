@@ -240,6 +240,8 @@ class HdLed(HdDevice):
 
     def blink(self, timeout, rate):
         try:
+            if rate == None:
+                rate = random.uniform(0.05, 1.0)
             if timeout == None:
                 while self.KEEP_BLINKING:
                     self.turn_on()
