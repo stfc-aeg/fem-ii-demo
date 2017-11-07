@@ -82,7 +82,7 @@ class IpcServer:
         for device in self.devices:
             if alias == device.get_alias():
                 address = device.get_addr()
-
+        
         return address
 
     def run_long_process(self, req_device, process, request):
@@ -146,9 +146,19 @@ class IpcServer:
                 
                 # Get the alias device name used in the request
                 req_alias = request.get_param("DEVICE")
-               
-                # get the address of the device
-                req_address = self.process_address(req_alias)
+             
+                if req_alias == "MULTI":
+                    req_device = req_alias
+                    req_address = req_alias
+
+                else:
+                    # Find the device attached to that request address
+                    for device in self.devices:
+                        if req_address == device.get_addr():
+                            req_device = device
+                  
+                    # get the address of the device
+                    req_address = self.process_address(req_alias)
 
                 # get the message value (CONFIG/STATUS/READ)
                 req_msg_val = request.get_msg_val()
@@ -159,13 +169,6 @@ class IpcServer:
 
                 reply_message = IpcMessage(msg_type="CMD", msg_val="NOTIFY")
                 
-                if req_alias == "MULTI":
-                    req_device = req_alias
-                else:
-                    # Find the device attached to that request address
-                    for device in self.devices:
-                        if req_address == device.get_addr():
-                            req_device = device
 
                 if req_msg_val == "PROCESS":
                     req_process = request.get_param("PROCESS")
