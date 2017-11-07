@@ -149,8 +149,9 @@ class IpcServer:
                 # Get the alias device name used in the request
                 req_alias = request.get_param("DEVICE")
                
-                # get the address of the device
-                req_address = self.process_address(req_alias)
+                if req_alias != "MULTI":
+                    # get the address of the device
+                    req_address = self.process_address(req_alias)
 
                 # get the message value (CONFIG/STATUS/READ)
                 req_msg_val = request.get_msg_val()
