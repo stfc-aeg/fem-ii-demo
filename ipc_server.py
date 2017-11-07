@@ -96,7 +96,7 @@ class IpcServer:
                 if rando == False:
                     req_rate = request.get_param("RATE")
                 else:
-                    req_rate = random.randrange(0.05, 1)
+                    req_rate = random.random()
                 # Currently not operating as process returns True AFTER process has completed...
                 self.thread_return = req_device.run_process(process, req_timeout, req_rate)
             except IpcMessageException as e:
