@@ -186,9 +186,12 @@ class IpcClient:
                         this_device = "LED"
                     else:
                         this_device = msg_device
-                    while msg_process not in PROCESSES[this_device]:
-                        msg_process = input("No such process for the device. PROCESS:" + "\n")
-                    
+                        try:
+                            while msg_process not in PROCESSES[this_device]:
+                                msg_process = input("No such process for the device. PROCESS:" + "\n")
+                        except KeyError:
+                            print("This device currently has no processes, please enter a different command.")
+                            continue
                     if msg_process == "START_BLINK":
                         blink_timeout = input("BLINK TIMEOUT (in seconds), 0 for infinite:" + "\n")
                         while self.isDigit(blink_timeout) == False:
