@@ -248,6 +248,7 @@ class HdLed(HdDevice):
                     time.sleep(float(rate))
                     self.turn_off()
                     time.sleep(float(rate))
+
             else:
                 start = time.time()
                 end = start + float(timeout)
@@ -256,9 +257,10 @@ class HdLed(HdDevice):
                     time.sleep(float(rate))
                     self.turn_off()
                     time.sleep(float(rate))
-
+            
+            self.process_status["BLINK"] = False
             self.status = "OFF"
-            self.process_running = False
+            #self.process_running = False
             return True
         except ValueError:
             return False
