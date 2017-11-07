@@ -175,7 +175,7 @@ class IpcServer:
                             for device in self.devices:
                                 if "LED" in device.get_alias():
                                     if device.process_running(req_process) == False:
-                                        thread = threading.Thread(target=self.run_long_process, args=(device, req_process, request, rando=True))
+                                        thread = threading.Thread(target=self.run_long_process, args=(device, req_process, request, True))
                                         thread.daemon = True
                                         thread.start()
                                         reply_string = "Processed request from %s. Started %s process on %s at address %s. \
