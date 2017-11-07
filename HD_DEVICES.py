@@ -149,8 +149,8 @@ class HdLed(HdDevice):
         HdDevice.__init__(self, status, address, alias)
         self.pin = pin
         self.mode = mode
-        if mcp != None:
-            self.mcp = mcp
+        if _mcp != None:
+            self.mcp = _mcp
         """
         self.mcp = MCP.MCP23008(0x20, busnum=2)
         self.pins = [0,1,2]
