@@ -66,59 +66,73 @@ class HdMcp230xx(HdDevice):
         self.busnum = busnum
 
         if self.model == "MCP23008":
-            self.mcp = MCP.MCP23008(self.addr, busnum=self.busnum)
+            #self.mcp = MCP.MCP23008(self.addr, busnum=self.busnum)
+            self.mcp = MCP.MCP23008(0x20, busnum=2)
+
         elif self.model == "MCP23017":
-            self.mcp = MCP.MCP23017(self.addr, busnum=self.busnum)
+            #self.mcp = MCP.MCP23017(self.addr, busnum=self.busnum)
+            self.mcp = MCP.MCP23008(0x20, busnum=2)
+
 
         self.pins = [0,1,2]
-
-        self.setup_outputs()
-        self.devices = [HdLed("OFF", "GP0", "LED_RED", 0, "MCP", self.mcp), HdLed("OFF", "GP1", "LED_YELL", 1, "MCP", self.mcp), HdLed("OFF", "GP0", "LED_GREEN", 2, "MCP", self.mcp)]
+        #self.setup_outputs()
+        #self.devices = [HdLed("OFF", "GP0", "LED_RED", 0, "MCP", self.mcp), HdLed("OFF", "GP1", "LED_YELL", 1, "MCP", self.mcp), HdLed("OFF", "GP0", "LED_GREEN", 2, "MCP", self.mcp)]
 
     def setup_outputs(self):
-
+        """
         for pin in self.pins:
             self.mcp.setup(pin, GPIO.OUT)
+        """
+        self.mcp.setup(0, GPIO.OUT)
+        self.mcp.setup(1, GPIO.OUT)
+        self.mcp.setup(2, GPIO.OUT)
 
     #   MUST BE OVERRIDEN 
     def get_data(self, alias=None):
-
+        pass
+        """
         output = ""
         for device in self.devices:
             output += "Device %s : %s.\n" % (device.get_alias(), device.get_data())
 
         return output
-
+        """
     def get_config(self, alias="LED_RED"):
-
+        pass
+        """
         output = ""
         for device in self.devices: 
             if device.get_alias() == alias:
                 output += "Device %s : %s.\n" % (device.get_alias(), device.get_config())
 
         return output
+        """
         
     def set_config(self, config, alias="LED_RED"):
-
+        pass
+        """
         for device in self.devices: 
             if device.get_alias == alias:
                 device.set_config(config)
                 
+        """
 
     def run_process(self, process, timeout=None, rate=None, alias="LED_RED"):
-
+        pass
+        """
         for device in self.devices: 
             if device.get_alias == alias:
                 if device.process_status[process] == False:
                     device.run_process(process, timeout, rate)
-
+        """
 
     def process_running(self, process, alias="LED_RED"):
-
+        pass
+        """
         for device in self.devices:
             if device.get_alias() == alias:
-                return device.process_status[process]
-
+               return device.process_status[process]
+        """
 
 
 class HdLed(HdDevice):
@@ -129,7 +143,7 @@ class HdLed(HdDevice):
     
     """
     def __init__(self, status="OFF", 
-                address="0X01", alias="LED", pin="P8_10", mode="GPIO", mcp=None):
+                address="0X01", alias="LED", pin="P8_10", mode="GPIO", _mcp=None):
         """ Subclass constructor """
         
         HdDevice.__init__(self, status, address, alias)

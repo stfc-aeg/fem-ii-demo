@@ -14,9 +14,9 @@ from zmq.utils.strtypes import unicode, cast_bytes
 #   Fixed config options for quick validating of user input
 MSG_TYPES = {"CMD"}
 MSG_VALS = {"STATUS", "CONFIG", "READ", "PROCESS"}
-HD_DEVICES = {"LED", "TEMP", "POWER", "MCP.LED_RED", "MCP.LED_YELL", "MCP.LED_GREEN"}
+HD_DEVICES = {"LED_BLUE", "TEMP", "POWER", "LED_RED", "LED_YELL", "LED_GREEN"}
 LED_STATES = {"ON", "OFF"}
-PROCESSES = {"LED": ["START_BLINK", "STOP_BLINK"], "MCP.LED_YELL": ["START_BLINK", "STOP_BLINK"], "MCP.LED_RED": ["START_BLINK", "STOP_BLINK"], "MCP.LED_GREEN": ["START_BLINK", "STOP_BLINK"]}
+PROCESSES = {"LED": ["START_BLINK", "STOP_BLINK"]}
 TEMP_STATES = {"C", "F"}
 VOLT_STATES = {"5", "3.3"}
 
@@ -182,7 +182,11 @@ class IpcClient:
                                                 configurations.\nVOLTAGE: \n")
                 elif msg_val == "PROCESS":
                     msg_process = input("PROCESS :" + "\n")
-                    while msg_process not in PROCESSES[msg_device]:
+                    if "LED" in msg_device:
+                        this_device = "LED"
+                    else:
+                        this_device = msg_device
+                    while msg_process not in PROCESSES[this_device]:
                         msg_process = input("No such process for the device. PROCESS:" + "\n")
                     
                     if msg_process == "START_BLINK":
