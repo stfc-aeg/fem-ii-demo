@@ -14,9 +14,9 @@ from zmq.utils.strtypes import unicode, cast_bytes
 #   Fixed config options for quick validating of user input
 MSG_TYPES = {"CMD"}
 MSG_VALS = {"STATUS", "CONFIG", "READ", "PROCESS"}
-HD_DEVICES = {"LED_BLUE", "TEMP", "POWER", "LED_RED", "LED_YELL", "LED_GREEN"}
+HD_DEVICES = {"LED_BLUE", "TEMP", "POWER", "LED_RED", "LED_YELLOW", "LED_GREEN", "MULTI"}
 LED_STATES = {"ON", "OFF"}
-PROCESSES = {"LED": ["START_BLINK", "STOP_BLINK"]}
+PROCESSES = {"LED": ["START_BLINK", "STOP_BLINK"], "MULTI" : ["START_BLINKCOMPLEX"]}
 TEMP_STATES = {"C", "F"}
 VOLT_STATES = {"5", "3.3"}
 
@@ -91,7 +91,7 @@ class IpcClient:
         
         if msgVal == "PROCESS":
             request.set_param("PROCESS", msgProcess)
-            if msgProcess == "START_BLINK":
+            if "START_BLINK" in msgProcess:
                 request.set_param("TIMEOUT", options["blink_timeout"])
                 request.set_param("RATE", options["blink_rate"])
 
@@ -189,7 +189,7 @@ class IpcClient:
                     while msg_process not in PROCESSES[this_device]:
                         msg_process = input("No such process for the device. PROCESS:" + "\n")
                     
-                    if msg_process == "START_BLINK":
+                    if "START_BLINK" in msg_process:
                         blink_timeout = input("BLINK TIMEOUT (in seconds), 0 for infinite:" + "\n")
                         while self.isDigit(blink_timeout) == False:
                             blink_timeout = input("Must be a number, BLINK TIMEOUT (in seconds):" + "\n")

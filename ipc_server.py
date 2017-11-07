@@ -10,6 +10,7 @@ import zmq
 import time
 import threading
 import argparse
+import random
 from odin_data.ipc_message import IpcMessage, IpcMessageException
 from HD_DEVICES import HdLed, HdPower, HdTemp, HdMcp230xx
 from zmq.utils.strtypes import unicode, cast_bytes
@@ -97,11 +98,40 @@ class IpcServer:
                 self.thread_return = req_device.run_process(process, req_timeout, req_rate)
             except IpcMessageException as e:
                 self.thread_return = False
+        elif process == "BLINKCOMPLEX":
+            self.blinkComplex(request)        
                 
     """
     def send_ack(self, client, message):
         self.publisher.send_string("%s %s" % (client, message))
     """
+    def blinkComplex(self, request):
+        try:
+            req_timeout = request.get_param("TIMEOUT")
+            req_rate = request.get_param("RATE")
+            LEDS = []
+
+            for device in self.devices:
+                if "LED" in device.get_alias():
+                    LEDS.append(device)
+            start = time.time()
+            end = start + float(req_timeout)
+             
+            while time.time() < end:
+                led = random.choice(LEDS)
+                led.set_config("ON")
+                time.sleep(float(req_rate))
+                led.set_config("OFF")
+                time.sleep(float(req_rate))
+        except IpcMessageException as e:
+            self.thread_return = False
+
+
+
+
+
+
+
 
     def run_rep(self):
         ''' sends a request, waits for a reply, returns response  '''
@@ -129,11 +159,13 @@ class IpcServer:
 
                 reply_message = IpcMessage(msg_type="CMD", msg_val="NOTIFY")
                 
-
-                # Find the device attached to that request address
-                for device in self.devices:
-                    if req_address == device.get_addr():
-                        req_device = device
+                if req_alias == "MULTI":
+                    req_device = req_alias
+                else:
+                    # Find the device attached to that request address
+                    for device in self.devices:
+                        if req_address == device.get_addr():
+                            req_device = device
 
                 if req_msg_val == "PROCESS":
                     req_process = request.get_param("PROCESS")
