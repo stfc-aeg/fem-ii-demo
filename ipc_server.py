@@ -82,7 +82,7 @@ class IpcServer:
         for device in self.devices:
             if alias == device.get_alias():
                 address = device.get_addr()
-        
+
         return address
 
     def run_long_process(self, req_device, process, request):
@@ -114,6 +114,8 @@ class IpcServer:
             for device in self.devices:
                 if "LED" in device.get_alias():
                     LEDS.append(device)
+
+
             start = time.time()
             end = start + float(req_timeout)
              
@@ -146,19 +148,9 @@ class IpcServer:
                 
                 # Get the alias device name used in the request
                 req_alias = request.get_param("DEVICE")
-             
-                if req_alias == "MULTI":
-                    req_device = req_alias
-                    req_address = req_alias
-
-                else:
-                    # Find the device attached to that request address
-                    for device in self.devices:
-                        if req_address == device.get_addr():
-                            req_device = device
-                  
-                    # get the address of the device
-                    req_address = self.process_address(req_alias)
+               
+                # get the address of the device
+                req_address = self.process_address(req_alias)
 
                 # get the message value (CONFIG/STATUS/READ)
                 req_msg_val = request.get_msg_val()
@@ -169,57 +161,68 @@ class IpcServer:
 
                 reply_message = IpcMessage(msg_type="CMD", msg_val="NOTIFY")
                 
+                if req_alias == "MULTI":
+                    thread = threading.Thread(target=self.blinkComplex, args=(request))
+                    thread.daemon = True
+                    thread.start()
+                    reply_string = "Processed request from %s. Started %s process on %s. \
+                                           " % (client_address.decode(),req_process, req_alias)
+                else:
+                    # Find the device attached to that request address
+                    for device in self.devices:
+                        if req_address == device.get_addr():
+                            req_device = device
 
-                if req_msg_val == "PROCESS":
-                    req_process = request.get_param("PROCESS")
+                    if req_msg_val == "PROCESS":
+                        req_process = request.get_param("PROCESS")
 
-                    pro_type, req_process = req_process.split("_")
+                        pro_type, req_process = req_process.split("_")
 
-                    if pro_type == "START":
-                        if req_device.process_running(req_process) == False:
-                            thread = threading.Thread(target=self.run_long_process, args=(req_device, req_process, request))
-                            thread.daemon = True
-                            thread.start()
-                            reply_string = "Processed request from %s. Started %s process on %s at address %s. \
-                                           " % (client_address.decode(),req_process, req_alias, req_address)
-                        else:
-                            reply_string = "Processed request from %s. Process %s on %s at address %s is already running. \
-                                           " % (client_address.decode(),req_process, req_alias, req_address)
-                    elif pro_type == "STOP":
-                        req_device.stop_process(req_process)
-                        reply_string = "Processed request from %s. Stopped %s process on %s at address %s. \
-                                        " % (client_address.decode(),req_process, req_alias, req_address)
-                           
+                        if pro_type == "START":
+                            if req_device.process_running(req_process) == False:
+                                thread = threading.Thread(target=self.run_long_process, args=(req_device, req_process, request))
+                                thread.daemon = True
+                                thread.start()
+                                reply_string = "Processed request from %s. Started %s process on %s at address %s. \
+                                            " % (client_address.decode(),req_process, req_alias, req_address)
+                            else:
+                                reply_string = "Processed request from %s. Process %s on %s at address %s is already running. \
+                                            " % (client_address.decode(),req_process, req_alias, req_address)
+                        elif pro_type == "STOP":
+                            req_device.stop_process(req_process)
+                            reply_string = "Processed request from %s. Stopped %s process on %s at address %s. \
+                                            " % (client_address.decode(),req_process, req_alias, req_address)
+                            
+                            
+
                         
+                        """
+                        if req_process == "BLINK":
+                            self.send_ack(client_address.decode(), "Starting %s process" % req_process)
+                            req_timeout = request.get_param("TIMEOUT")
+                            req_rate = request.get_param("RATE")
+                            req_device.run_process(req_process, req_timeout, req_rate)
+                            reply_string = "Processed request from %s. Started %s process on %s at address %s for %s seconds. \
+                                            " % (client_address.decode(),req_process, req_alias, req_address, req_timeout)
+                        """
+                    if req_msg_val == "CONFIG":
+                        req_config = request.get_param("CONFIG")
+                        req_device.set_config(req_config)
+                        reply_string = "Processed Request from %s. Set %s at \
+                                        address %s to: %s." % (client_address.decode(),
+                                        req_alias, req_address, req_device.get_config())
+    
+                    if req_msg_val == "STATUS":
+                        rep_status = req_device.get_status()
+                        reply_string = "Processed Request from %s. Status of %s at \
+                                        address %s is: %s." % (client_address.decode(), 
+                                        req_alias, req_address, rep_status)
 
-                    
-                    """
-                    if req_process == "BLINK":
-                        self.send_ack(client_address.decode(), "Starting %s process" % req_process)
-                        req_timeout = request.get_param("TIMEOUT")
-                        req_rate = request.get_param("RATE")
-                        req_device.run_process(req_process, req_timeout, req_rate)
-                        reply_string = "Processed request from %s. Started %s process on %s at address %s for %s seconds. \
-                                        " % (client_address.decode(),req_process, req_alias, req_address, req_timeout)
-                    """
-                if req_msg_val == "CONFIG":
-                    req_config = request.get_param("CONFIG")
-                    req_device.set_config(req_config)
-                    reply_string = "Processed Request from %s. Set %s at \
-                                    address %s to: %s." % (client_address.decode(),
-                                    req_alias, req_address, req_device.get_config())
-  
-                if req_msg_val == "STATUS":
-                    rep_status = req_device.get_status()
-                    reply_string = "Processed Request from %s. Status of %s at \
-                                    address %s is: %s." % (client_address.decode(), 
-                                    req_alias, req_address, rep_status)
-
-                if req_msg_val == "READ":
-                    rep_value = req_device.get_data()
-                    reply_string = "Processed Request from %s. Value of %s at \
-                                    address %s is: %s." % (client_address.decode(), 
-                                    req_alias, req_address, rep_value)
+                    if req_msg_val == "READ":
+                        rep_value = req_device.get_data()
+                        reply_string = "Processed Request from %s. Value of %s at \
+                                        address %s is: %s." % (client_address.decode(), 
+                                        req_alias, req_address, rep_value)
 
                 reply_message.set_param("REPLY", reply_string)
 
