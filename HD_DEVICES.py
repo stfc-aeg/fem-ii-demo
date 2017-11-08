@@ -9,8 +9,7 @@ import Adafruit_GPIO.MCP230xx as MCP
 class HdDevice:
     """ Represents a generic hardware device """
 
-    def __init__(self, status, 
-                address, alias):
+    def __init__(self, status, address, alias):
         """ Superclass constructor
 
         :param status: on/off status of the device
@@ -50,14 +49,22 @@ class HdDevice:
     def run_process(self, process, alias=None):
         pass
 
-class HdMcp230xx(HdDevice):
 
+class HdMcp230xx(HdDevice):
+    """ Subclass, extends HD_DEVICE
+
+    Represents an MCP I/0 Expander
+    Overrides get_data, get_config and set_config
+    
+    :param model: the MCP model type
+    :param busnum: the i2c busnumber for the device
+
+    """
     def __init__(
         self, status="Connected", address=0x20, alias="MCP",
         model="MCP23008", busnum=2
     ):
         """ Subclass constructor """
-        
         HdDevice.__init__(self, status, address, alias)
 
         self.model = model
@@ -68,14 +75,16 @@ class HdMcp230xx(HdDevice):
         elif self.model == "MCP23017":
             self.mcp = MCP.MCP23017(self.addr, busnum=self.busnum)
 
-        self.pins = [0,1,2]
+        self.pins = [0, 1, 2]
+        self.devices = []
 
     def setup_outputs(self):
+        """ Set up all pins as outputs """
         
         for pin in self.pins:
             self.mcp.setup(pin, GPIO.OUT)
  
-    #   MUST BE OVERRIDEN 
+    #   MUST BE OVERRIDEN - Currently not implemented due to no requirement
     def get_data(self, alias=None):
         pass
         """
@@ -132,6 +141,9 @@ class HdLed(HdDevice):
 
     Represents a simple LED hardware device
     Overrides get_data, get_config and set_config
+    :param pin: the pin number for the LED
+    :param mode: Mode of communication (GPIO or via an MCP)
+    :param _mcp: MCP object if the LED is attached to an MCP
     
     """
     def __init__(
@@ -143,25 +155,15 @@ class HdLed(HdDevice):
         HdDevice.__init__(self, status, address, alias)
         self.pin = pin
         self.mode = mode
-        if _mcp != None:
+        if _mcp is not None:
             self.mcp = _mcp
-        """
-        self.mcp = MCP.MCP23008(0x20, busnum=2)
-        self.pins = [0,1,2]
-        self.setup_outputs()
-        """
-
-        if mode == "GPIO":
+        elif mode == "GPIO":
             BBGPIO.setup(self.pin, BBGPIO.OUT)
 
         self.KEEP_BLINKING = False
         self.process_status = {"BLINK": False}
-    """
-    def setup_outputs(self):
+    
 
-        for pin in self.pins:
-            self.mcp.setup(pin, GPIO.OUT)
-    """
     # @ovveride
     def get_data(self, alias=None):
         """ Returns the status of the LED
@@ -181,11 +183,12 @@ class HdLed(HdDevice):
 
         return self.status
 
-   # @ovveride
+    # @ovveride
     def set_config(self, config, alias=None):
         """ Sets the status of the LED
         
         :param config: ON/OFF status of the LED
+        :param alias: Alias Name of the LED
         As the LED has no configuration, 
         sets the status i.e ON/OFF
         """
@@ -202,22 +205,38 @@ class HdLed(HdDevice):
                 BBGPIO.output(self.pin, BBGPIO.LOW)
         
     def stop_process(self, process, alias=None):
+        """ Stops the current process
 
+        :param process: the process to be stopped
+        :param alias: the alias of the device
+
+        Sets the process_status for the given process as False
+        """
         self.process_status[process] = False
         if process == "BLINK":
             self.KEEP_BLINKING = False
         
     def run_process(self, process, timeout=None, rate=1, alias=None):
-       
+        """ Starts the current process
+
+        :param process: the process to be stopped
+        :param timeout: The timeout for the process i.e when to stop automatically
+        :param rate: The rate to perform the process, if it is a periodic process.
+        :param alias: the alias of the device
+        
+        returns the status of the method call (True for success, False for fail)
+        Sets the process_status for the given process as True.
+        Calls the appropriate method and sets the status as OFF once complete
+        """
         self.process_status[process] = True
         if process == "BLINK":
-            if timeout == None:
-                self.KEEP_BLINKING = True
-            status = self.blink(timeout,rate)
+            status = self.blink(timeout, rate)
             self.status = "OFF"
         return status
 
     def turn_on(self):
+        """ Turns ON the LED in either GPIO or MCP mode, sets the status to ON """
+
         if self.mode == "MCP":
             self.mcp.output(self.pin, 1)
         else:
@@ -225,6 +244,8 @@ class HdLed(HdDevice):
         self.status = "ON"
 
     def turn_off(self):
+        """ Turns OFF the LED in either GPIO or MCP mode, sets the status to OFF"""
+
         if self.mode == "MCP":
             self.mcp.output(self.pin, 0)
         else:
@@ -232,10 +253,20 @@ class HdLed(HdDevice):
         self.status = "OFF"
 
     def blink(self, timeout, rate):
+        """ Blinking procedure for the LED
+        :param timeout: the timeout for the blinking, if none - infinite
+        :param rate: the rate at which to blink, if none - random
+
+        Sets the process_status for BLINK to False
+        And turns off the LED on completion to ensure no 'hanging' LED's.abs
+
+        Returns true if the method completes without errors, false if ValueError.
+        """
         try:
-            if rate == None:
+            if rate is None:
                 rate = random.uniform(0.05, 1.0)
-            if timeout == None:
+            if timeout is None:
+                self.KEEP_BLINKING = True
                 while self.KEEP_BLINKING:
                     self.turn_on()
                     time.sleep(float(rate))
@@ -252,15 +283,17 @@ class HdLed(HdDevice):
                     time.sleep(float(rate))
             
             self.process_status["BLINK"] = False
-            self.status = "OFF"
             self.turn_off()
-            #self.process_running = False
             return True
         except ValueError:
             return False
 
     def process_running(self, process, alias=None):
+        """ Helper method to check the status of a process 
+        :param process: the process to be checked
+        :param alias: the name of the device
 
+        """
         return self.process_status[process]
 
 
@@ -273,9 +306,11 @@ class HdTemp(HdDevice):
     :param fc: degrees configuration, F = Farenheit, C = Celcius
     
     """
-    def __init__(self, status="OFF", address="0X02", 
-                temp=randint(-100, 200), fc="C", 
-                alias="TEMP"):
+    def __init__(
+        self, status="OFF", address="0X02",
+        temp=randint(-100, 200), fc="C",
+        alias="TEMP"
+    ):
         """ Subclass constructor """
 
         HdDevice.__init__(self, status, address, alias)
@@ -320,8 +355,10 @@ class HdPower(HdDevice):
     :param volts: current voltage reading
     
     """
-    def __init__(self, status="OFF", address="0X03", 
-                volts="5", config="5", alias="POWER"):
+    def __init__(
+        self, status="OFF", address="0X03", 
+        volts="5", config="5", alias="POWER"
+    ):
         """ Subclass constructor """
 
         HdDevice.__init__(self, status, address, alias)
@@ -332,7 +369,7 @@ class HdPower(HdDevice):
     def get_data(self, alias=None):
         """ Returns the current voltage """
 
-        #Read a fake voltage reading around the current voltage config
+        # Read a fake voltage reading around the current voltage config
         volts1 = float(self.config) - 0.2
         volts2 = float(self.config) + 0.2
         fake_volts = random.uniform(volts1, volts2)
@@ -351,40 +388,3 @@ class HdPower(HdDevice):
         """ Return the voltage configuration"""
 
         return self.config + "V"
-
-
-
-class I2cHdLed(HdLed):
-
-    def __init__(self, status="OFF", 
-                address="GP0", alias="LED_RED", pin="0", mcp=None):
-        """ Subclass constructor """
-        
-        HdLed.__init__(self, status, address, alias, pin)
-        self.mcp = mcp
-        self.KEEP_BLINKING = False
-        self.process_status = {"BLINK": False}
-
-
-     # @ovveride
-    def set_config(self, config, alias=None):
-        """ Sets the status of the LED
-        
-        :param config: ON/OFF status of the LED
-        As the LED has no configuration, 
-        sets the status i.e ON/OFF
-        """
-        self.status = config
-        if config == "ON":
-            self.mcp.output(self.pin, 1)
-        elif config == "OFF":
-            self.mcp.output(self.pin, 0)
-       
-    def turn_on(self):
-        self.mcp.output(self.pin, 1)
-        self.status = "ON"
-
-    def turn_off(self):
-        self.mcp.output(self.pin, 0)
-        self.status = "OFF"
-

@@ -20,10 +20,12 @@ HD_DEVICES = {
 }
 LED_STATES = {"ON", "OFF"}
 PROCESSES = {
-    "LED" : ["START_BLINK", "STOP_BLINK"]
+    "LED": ["START_BLINK", "STOP_BLINK"]
 }
 TEMP_STATES = {"C", "F"}
 VOLT_STATES = {"5", "3.3"}
+
+# Default values 
 DEF_BLINK_RATE = "1"
 DEF_BLINK_TIMEO = None
 DEF_POWER_CONFIG = "5"
@@ -34,6 +36,16 @@ DEF_PORT = "5555"
 
 
 class IpcClient:
+    """ IpcClient class, represents a client which uses IpcMessaging to communicate to server
+
+    :param port: The port number used
+    :param identity: Client identity
+    :param url: TCP URL to connect to
+    :param context: ZMQ context
+    :param socket: ZMQ socket - DEALER
+   
+    
+    """
 
     def __init__(self, url, port):
         ident = str(randint(0, 100000))
@@ -56,10 +68,8 @@ class IpcClient:
         and prints out the REPLY string
 
         """
-        # Strip off the address
+       
         r_address, reply = self.socket.recv_multipart()
-
-        # format it as an IPC message
         reply = IpcMessage(from_str=reply)
         print("Received Response: %s" % reply.get_param("REPLY"))
 
@@ -88,7 +98,7 @@ class IpcClient:
                 request.set_param("TIMEOUT", options["blink_timeout"])
                 request.set_param("RATE", options["blink_rate"])
 
-        print("%s Configuring service request..." % self.identity)
+        print("%s Configuring service request...\n" % self.identity)
 
         #   Encode the message to be sent
         request = request.encode()
@@ -137,30 +147,25 @@ class IpcClient:
 
                 print("---------------------------------")
 
-                # Validate msg_type (CMD)
                 msg_type = input("Message Type: " + "\n")
                 while msg_type not in MSG_TYPES:
                     msg_type = input("No such type.\nMessage Type: " + "\n")
 
-                # Validate msg_val (READ/CONFIG/STATUS)
                 msg_val = input("Message Value: " + "\n")
                 while msg_val not in MSG_VALS:
                     msg_val = input("No such value.\nMessage Value: " + "\n")
 
-                # Get the alias of the request hardware device
                 msg_device = input("Device: " + "\n")
                 while msg_device not in HD_DEVICES:
                     msg_device = input(
                         "No such device registered.\nDevice:\n"
                     )
 
-                # Initialise config to none incase its a STATUS or READ message
                 msg_config = None
                 msg_process = None
                 blink_timeout = None
                 blink_rate = None
 
-                # Configuration processing for different device options
                 if msg_val == "CONFIG":
                     if "LED" in msg_device:
                         msg_config = input("LED STATE:" + "\n")
@@ -199,7 +204,7 @@ class IpcClient:
                     if msg_process == "START_BLINK":
                         blink_timeout = input(
                             "BLINK TIMEOUT (in seconds),0 for infinite:\n")
-                        while self.isDigit(blink_timeout) == False:
+                        while self.isDigit(blink_timeout) is False:
                             blink_timeout = input(
                                 "Must be a number, BLINK TIMEOUT (in seconds):\n" 
                             )
@@ -210,7 +215,7 @@ class IpcClient:
                         blink_rate = input(
                             "BLINK RATE (in seconds), 0 for random:\n"
                         )
-                        while self.isDigit(blink_rate) == False:
+                        while self.isDigit(blink_rate) is False:
                             blink_rate = input(
                                 "Must be a number, BLINK RATE(in seconds):\n"
                             )
@@ -229,6 +234,7 @@ class IpcClient:
 def main():
 
     options = {}
+    # Split the processes dictionary 
     processes = [value for key, value in PROCESSES.items()]
     processes = [item for sublist in processes for item in sublist]
 
@@ -270,17 +276,18 @@ def main():
                         type=float, default=None)
     args = parser.parse_args()
 
+    #   Ensure full length arguments for a run_once
     arg_length = len([x for x in vars(args) if getattr(args, x) is not None])
 
     RUN_ONCE = None
 
     args_config = None
-    if args.url == None:
+    if args.url is None:
         args.url = DEF_URL
-    if args.port == None:
+    if args.port is None:
         args.port = DEF_PORT
 
-    print("Connecting on:\nURL: %s\nPORT: %s" % (args.url,args.port))
+    print("Connecting on:\nURL: %s\nPORT: %s" % (args.url, args.port))
     client = IpcClient(args.url, args.port)
     client.connect()
 
@@ -288,43 +295,47 @@ def main():
         RUN_ONCE = False
 
     else:
-        #   minimum combination of parameters required for command
+        #   Check if the minimum number of arguments has been provided, quit if not
         req_command_args = [args.device, args.msg_type, args.msg_val]
         req_length = len([x for x in req_command_args if x is not None])
         if req_length in range(1, 3):
-            parser.error("Invalid command message. Requires msg_type,",
-                         "msg_val and msg_device to be defined")
+            parser.error(
+                "Invalid command message. Requires msg_type, msg_val and device to be defined"
+            )
 
-        elif args.msg_val == "PROCESS" and args.process == None:
+        elif args.msg_val == "PROCESS" and args.process is None:
             parser.error("Process requested but no process selected")
 
         else:
             RUN_ONCE = True
 
-            if args.device == "LED":
-                if args.led_config != None:
+            if "LED" in args.device:
+                if args.led_config is not None:
                     args_config = args.led_config
                 else:
                     args_config = DEF_LED_CONFIG
 
             elif args.device == "TEMP":
-                if args.temp_config != None:
+                if args.temp_config is not None:
                     args_config = args.temp_config
                 else:
                     args_config = DEF_TEMP_CONFIG
-            else:
-                if args.power_config != None:
+
+            elif args.device == "POWER":
+                if args.power_config is not None:
                     args_config = args.power_config
                 else:
                     args_config = DEF_POWER_CONFIG
+            else:
+                parser.error("Internal error, device not recognised")
 
-            if args.msg_val == "PROCESS" and args.process != None:
+            if args.msg_val == "PROCESS" and args.process is not None:
                 if args.process == "START_BLINK":
-                    if args.b_rate == None:
+                    if args.b_rate is None:
                         options["blink_rate"] = DEF_BLINK_RATE
                     else:
                         options["blink_rate"] = args.b_rate
-                    if args.b_timeout == None:
+                    if args.b_timeout is None:
                         options["blink_timeout"] = DEF_BLINK_TIMEO
                     else:
                         options["blink_timeout"] = args.b_timeout

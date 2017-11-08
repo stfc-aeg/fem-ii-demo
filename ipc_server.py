@@ -1,8 +1,7 @@
 '''
-    Server with three emulated hardware devices
+    Server with N hardware devices
     Communicates with N number of ipc_clients
     Uses Ipc Message formatting
-
 
 '''
 
@@ -22,6 +21,20 @@ HD_ADDR = {"0X01", "0X02", "0X03", "0X20"}
 
 
 class IpcServer:
+    """ IpcServer class, represents a server which uses IpcMessaging
+
+    :param port: The port number used
+    :param identity: Server identity
+    :param url: TCP URL for server
+    :param context: ZMQ context
+    :param socket: ZMQ socket - ROUTER
+    :param address_pool: Set of available hardware addresses
+    :param HdMCP: MCP230xx instance
+    :param devices: Set of initialised hardware devices
+    :param lookup: Address to alias lookup table for hardware device recognition
+
+
+    """
 
     def __init__(self, port):
 
@@ -44,7 +57,7 @@ class IpcServer:
         self.lookup = {}
 
     def bind(self):
-        """ binds both of the zmq sockets """
+        """ binds the zmq socket """
         self.socket.bind(self.url)
 
     def assign_addresses(self):
@@ -71,7 +84,7 @@ class IpcServer:
     def process_address(self, alias):
         ''' Return the address of the alias in request
 
-        :param request: the IPCmessage from the client request
+        :param alias: the device alias name to search for
         Returns the address of the device from the lookup table
 
         '''
@@ -83,6 +96,12 @@ class IpcServer:
         return address
 
     def run_long_process(self, req_device, process, request):
+        """ Thread method to run a long process on a device
+
+        :param req_device: The device to run the process on
+        :param process: The process to run
+        :param request: The ipc message request sent from the client 
+        """
 
         # This makes no sense with more than 1 thread running..
         self.thread_return = None
@@ -103,8 +122,16 @@ class IpcServer:
                 self.thread_return = False
 
     def handle_start_process(self, req_process, req_device, request):
+        """ Manage a 'START' process request
+        
+        :param req_process: the process to perform
+        :parm req_device: the device to perform the process on
+        :param request: the ipc message request from the client
 
-        if req_device.process_running(req_process) == False:
+        Returns the formatted response from the server to indicate that the
+        process has been started at the given address
+        """
+        if req_device.process_running(req_process) is False:
             thread = threading.Thread(
                 target=self.run_long_process, 
                 args=(req_device, req_process, request)
@@ -125,6 +152,14 @@ class IpcServer:
         return reply
 
     def handle_stop_process(self, req_process, req_device):
+        """ Manage a 'STOP' process request
+        
+        :param req_process: the process to perform
+        :parm req_device: the device to perform the process on
+
+        Returns the formatted response from the server to indicate that the
+        process has been stopped at the given address
+        """
 
         req_device.stop_process(req_process)
         return "Stopped %s process on %s at address %s.\n" % (
@@ -134,7 +169,14 @@ class IpcServer:
         )
 
     def handle_config(self, req_device, req_config):
+        """ Manage a 'CONFIG' request
+        
+        :param req_device: the device to configure
+        :parm req_config: the configuration value
 
+        Returns the formatted response from the server to indicate that the
+        configuration has been changed at the given address
+        """
         req_device.set_config(req_config)
         return "Set %s at %s to: %s.\n" % (
             req_device.get_alias(),
@@ -143,6 +185,13 @@ class IpcServer:
         )
 
     def handle_read(self, req_device):
+        """ Manage a 'READ' request
+        
+        :param req_device: the device to read from
+
+        Returns the formatted response from the server including the value 
+        from the device at the given address
+        """
 
         rep_value = req_device.get_data()
         return "Value of %s at address %s is: %s.\n" % (
@@ -152,7 +201,13 @@ class IpcServer:
         )
 
     def handle_status(self, req_device):
+        """ Manage a 'STATUS' request
+        
+        :param req_device: the device to get the status from
 
+        Returns the formatted response from the server including the status 
+        of the device at the given address
+        """
         rep_status = req_device.get_status()
         return "Status of %s at address %s is: %s.\n" % (
             req_device.get_alias(),
@@ -161,7 +216,15 @@ class IpcServer:
         )
 
     def run_rep(self):
-        ''' sends a request, waits for a reply, returns response  '''
+        """ Synchronose Req-REP loop : Waits for a request from a client, 
+        processes and returns a response.
+        
+        Method receives a multipart message from a client, decodes and handles
+        different requests including single or multi device requests. 
+        Formats a suitable multipart response to send back to the same client 
+        using IPC Message, msg_val = NOTIFY
+        
+        """
 
         while True:
 
@@ -173,9 +236,8 @@ class IpcServer:
                     client_address.decode()
                     ))
 
-                # Get the alias device name used in the request
+                # Device alias name 
                 req_alias = request.get_param("DEVICE")
-                # get the message value (CONFIG/STATUS/READ)
                 req_msg_val = request.get_msg_val()
                 req_device = None
                 req_config = None
@@ -183,6 +245,7 @@ class IpcServer:
                 reply_message = IpcMessage(msg_type="CMD", msg_val="NOTIFY")
 
                 if req_alias == "LED_ALL":
+                    # No address for a multi device call
                     req_address = req_alias
                     reply = ""
                     if req_msg_val == "PROCESS":
@@ -204,8 +267,10 @@ class IpcServer:
                                         req_process,
                                         req_device
                                     )
+                        else:
+                            reply = "Process type not recognised"
 
-                    if req_msg_val == "CONFIG":
+                    elif req_msg_val == "CONFIG":
                         req_config = request.get_param("CONFIG")
                         for req_device in self.devices:
                             if "LED" in req_device.get_alias():
@@ -214,25 +279,26 @@ class IpcServer:
                                     req_config
                                 )
 
-                    if req_msg_val == "STATUS":
+                    elif req_msg_val == "STATUS":
                         for req_device in self.devices:
                             if "LED" in req_device.get_alias():
                                 reply += self.handle_status(req_device)
 
-                    if req_msg_val == "READ":
+                    elif req_msg_val == "READ":
                         for req_device in self.devices:
                             if "LED" in req_device.get_alias():
                                 reply += self.handle_read(req_device)
+                    else:
+                        reply = "Msg Value not recognised"
 
                     if reply == "":
                         reply = "Internal error"
 
                 else:
                     reply = ""
-                    # get the address of the device
                     req_address = self.process_address(req_alias)
 
-                    # Find the device attached to that request address
+                    # Find the device registered
                     for device in self.devices:
                         if req_address == device.get_addr():
                             req_device = device
@@ -252,39 +318,38 @@ class IpcServer:
                                 req_process,
                                 req_device
                             )
+                        else:
+                            reply = "Process type not recognised"
 
                     if req_msg_val == "CONFIG":
                         req_config = request.get_param("CONFIG")
                         reply += self.handle_config(req_device, req_config)
 
-                    if req_msg_val == "STATUS":
+                    elif req_msg_val == "STATUS":
                         reply += self.handle_status(req_device)
 
-                    if req_msg_val == "READ":
+                    elif req_msg_val == "READ":
                         reply += self.handle_read(req_device)
+                    else:
+                        reply = "Msg Value not recognised"
 
                     if reply == "":
                         reply = "Internal error"
 
-
-                reply_string = "Processed Request from %s. %s" % (
+                reply_string = "Processed Request from %s\n: %s" % (
                     client_address.decode(),
                     reply
                 )
                 reply_message.set_param("REPLY", reply_string)
-
-                # Encode the message for sending
                 reply_message = reply_message.encode()
 
-                # check if its unicode, if so covert to bytes
                 if isinstance(reply_message, unicode):
                     reply_message = cast_bytes(reply_message)
 
-                # send a multipart back to the client
                 self.socket.send_multipart(
                     [client_address,
-                    b"",
-                    reply_message,
+                     b"",
+                     reply_message,
                     ]
                 )
 
@@ -294,24 +359,19 @@ class IpcServer:
 
 def main(): 
 
-    # Accept command line arguments for the port number used, default is 5555
+    # Accept command line arguments for the port
     parser = argparse.ArgumentParser()
     parser.add_argument("-port", "--port", help="Port connection, default = 5555", 
                         default="5555")
     args = parser.parse_args()
-
-    # Initialise a server
     server = IpcServer(args.port)
 
-    # configure hardware addresses and alias look up tables
+    # Configure hardware addresses and alias look up tables
     server.assign_addresses()
     server.make_lookup()
-
-    # Display the fake device address tree
     print("Hardware device address tree:")
     print(server.lookup)
 
-    # bind the socket and run reply loop
     server.bind()
     server.run_rep()
 
