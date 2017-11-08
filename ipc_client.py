@@ -150,8 +150,9 @@ class IpcClient:
                 # Get the alias of the request hardware device
                 msg_device = input("Device: " + "\n")
                 while msg_device not in HD_DEVICES:
-                    msg_device = input("No such device registered.\n",
-                                       "Device: " + "\n")
+                    msg_device = input(
+                        "No such device registered.\nDevice:\n"
+                    )
 
                 # Initialise config to none incase its a STATUS or READ message
                 msg_config = None
@@ -165,18 +166,20 @@ class IpcClient:
                         msg_config = input("LED STATE:" + "\n")
                         while msg_config not in LED_STATES:
                             msg_config = input(
-                                "ON or OFF are the only LED configurations.\n", 
-                                "LED STATE: \n")
+                                "ON or OFF are the only LED configurations.\nLED STATE: \n"
+                            )
                     if msg_device == "TEMP":
                         msg_config = input("F/C:" + "\n")
                         while msg_config not in TEMP_STATES:
-                            msg_config = input("F/C are the only temperature",
-                                               "configurations.\n F/C: \n")
+                            msg_config = input(
+                                "F/C are the only temperature configurations.\n F/C: \n"
+                            )
                     if msg_device == "POWER":
                         msg_config = input("VOLTAGE:" + "\n")
                         while msg_config not in VOLT_STATES:
-                            msg_config = input("5 and 3.3 are the only voltage",
-                                               "configurations.\nVOLTAGE: \n")
+                            msg_config = input(
+                                "5 and 3.3 are the only voltage configurations.\nVOLTAGE: \n"
+                            )
                 elif msg_val == "PROCESS":
                     msg_process = input("PROCESS :" + "\n")
                     if "LED" in msg_device:
@@ -185,29 +188,32 @@ class IpcClient:
                         this_device = msg_device
                     try:
                         while msg_process not in PROCESSES[this_device]:
-                            msg_process = input("No such process for the device.",
-                                                "PROCESS:" + "\n")
+                            msg_process = input(
+                                "No such process for the device. PROCESS:\n"
+                            )
                     except KeyError:
                         print("This device currently has no processes,",
                               "please enter a different command.")
                         continue
 
                     if msg_process == "START_BLINK":
-                        blink_timeout = input("BLINK TIMEOUT (in seconds),",
-                                              "0 for infinite:" + "\n")
+                        blink_timeout = input(
+                            "BLINK TIMEOUT (in seconds),0 for infinite:\n")
                         while self.isDigit(blink_timeout) == False:
-                            blink_timeout = input("Must be a number,",
-                                                  "BLINK TIMEOUT (in seconds):" 
-                                                  + "\n")
+                            blink_timeout = input(
+                                "Must be a number, BLINK TIMEOUT (in seconds):\n" 
+                            )
                         if blink_timeout == "0":
                             blink_timeout = None
                         options["blink_timeout"] = blink_timeout
 
-                        blink_rate = input("BLINK RATE (in seconds),",
-                                           " 0 for random:" + "\n")
+                        blink_rate = input(
+                            "BLINK RATE (in seconds), 0 for random:\n"
+                        )
                         while self.isDigit(blink_rate) == False:
-                            blink_rate = input("Must be a number,",
-                                               "BLINK RATE(in seconds):" + "\n")
+                            blink_rate = input(
+                                "Must be a number, BLINK RATE(in seconds):\n"
+                            )
                         if blink_rate == "0":
                             blink_rate = None
                         options["blink_rate"] = blink_rate
@@ -234,25 +240,28 @@ def main():
 
     parser.add_argument("-url", "--url", help="Remote server url, \
                         default = tcp://localhost", default="tcp://localhost")
-    parser.add_argument("-port", "--port", help="Port connection, default = 5555",
+    parser.add_argument("-port", "--port", 
+                        help="Port connection, default = 5555",
                         default=None)
-    parser.add_argument("-msg_type", "--msg_type", help="Message type, accepts: %s"
+    parser.add_argument("-msg_type", "--msg_type",
+                        help="Message type, accepts: %s"
                         % MSG_TYPES, choices=MSG_TYPES)
     parser.add_argument("-msg_val", "--msg_val", help="Message val, accepts: %s"
                         % MSG_VALS, choices=MSG_VALS)
     parser.add_argument("-device", "--device", help="Target device, accepts: %s"
                         % HD_DEVICES, choices=HD_DEVICES)
-    parser.add_argument("-process", "--process", help="Process to be performed, accepts: %s." % 
-                        PROCESSES, choices=processes, default=None)
+    parser.add_argument("-process", "--process",
+                        help="Process to be performed, accepts: %s."
+                        % PROCESSES, choices=processes, default=None)
     parser.add_argument("-led_config", "--led_config",
-                        help="LED device configuration option, accepts: %s. Default = ON" % 
-                        LED_STATES, choices=LED_STATES, default=None)
+                        help="LED device configuration option, accepts: %s. Default = ON"
+                        % LED_STATES, choices=LED_STATES, default=None)
     parser.add_argument("-temp_config", "--temp_config",
-                        help="Temperature device configuration option, accepts: %s. Default = c" % 
-                        TEMP_STATES, choices=TEMP_STATES, default=None)
+                        help="Temperature device configuration option, accepts: %s. Default = c"
+                        % TEMP_STATES, choices=TEMP_STATES, default=None)
     parser.add_argument("-power_config", "--power_config",
-                        help="Power device configuration option, accepts: %s. Default = 5V" % 
-                        VOLT_STATES, choices=VOLT_STATES, default=None)
+                        help="Power device configuration option, accepts: %s. Default = 5V"
+                        % VOLT_STATES, choices=VOLT_STATES, default=None)
     parser.add_argument("-b_timeout", "--b_timeout",
                         help="Timeout for START_BLINK call, must be in seconds. Default = Infinite", 
                         type=float, default=None)
