@@ -318,7 +318,7 @@ class IpcServer:
                         else:
                             reply = "Process type not recognised"
 
-                    if req_msg_val == "CONFIG":
+                    elif req_msg_val == "CONFIG":
                         req_config = request.get_param("CONFIG")
                         reply += self.handle_config(req_device, req_config)
 
@@ -327,7 +327,7 @@ class IpcServer:
 
                     elif req_msg_val == "READ":
                         reply += self.handle_read(req_device)
-                    else:
+                    elif req_msg_val not in MSG_VALS:
                         reply = "Msg Value not recognised"
 
                     if reply == "":
