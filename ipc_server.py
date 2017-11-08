@@ -94,6 +94,7 @@ class IpcServer:
                 """Currently not operating as process returns True 
                 AFTER process has completed...
                 """
+                req_device.set_config(process)
                 self.thread_return = req_device.run_process(
                     process, 
                     req_timeout, 
