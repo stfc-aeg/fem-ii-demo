@@ -217,7 +217,7 @@ class IpcServer:
                     if req_msg_val == "STATUS":
                         for req_device in self.devices:
                             if "LED" in req_device.get_alias():
-                                reply += self.handle_status(self, req_device)
+                                reply += self.handle_status(req_device)
 
                     if req_msg_val == "READ":
                         for req_device in self.devices:
@@ -258,7 +258,7 @@ class IpcServer:
                         reply += self.handle_config(req_device, req_config)
 
                     if req_msg_val == "STATUS":
-                        reply += self.handle_status(self, req_device)
+                        reply += self.handle_status(req_device)
 
                     if req_msg_val == "READ":
                         reply += self.handle_read(req_device)
