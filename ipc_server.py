@@ -269,7 +269,6 @@ class IpcServer:
                                     )
                         else:
                             reply = "Process type not recognised"
-
                     elif req_msg_val == "CONFIG":
                         req_config = request.get_param("CONFIG")
                         for req_device in self.devices:
@@ -278,17 +277,15 @@ class IpcServer:
                                     req_device,
                                     req_config
                                 )
-
                     elif req_msg_val == "STATUS":
                         for req_device in self.devices:
                             if "LED" in req_device.get_alias():
                                 reply += self.handle_status(req_device)
-
                     elif req_msg_val == "READ":
                         for req_device in self.devices:
                             if "LED" in req_device.get_alias():
                                 reply += self.handle_read(req_device)
-                    else:
+                    elif req_msg_val not in MSG_VALS:
                         reply = "Msg Value not recognised"
 
                     if reply == "":
