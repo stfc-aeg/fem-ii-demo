@@ -10,7 +10,8 @@ import time
 import threading
 import argparse
 import random
-from odin_data.ipc_message import IpcMessage, IpcMessageException
+from _ipc_message import IpcMessage, IpcMessageException
+#from odin_data.ipc_message import IpcMessage, IpcMessageException
 from HD_DEVICES import HdLed, HdPower, HdTemp, HdMcp230xx
 from zmq.utils.strtypes import unicode, cast_bytes
 

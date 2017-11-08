@@ -8,10 +8,11 @@ import sys
 from random import randint
 import zmq
 import argparse
-from odin_data.ipc_message import IpcMessage
+from _ipc_message import IpcMessage, IpcMessageException
+# from odin_data.ipc_message import IpcMessage
 from zmq.utils.strtypes import unicode, cast_bytes
 
-#   Fixed config options for quick validating of user input
+# Fixed config options for quick validating of user input
 MSG_TYPES = {"CMD"}
 MSG_VALS = {"STATUS", "CONFIG", "READ", "PROCESS"}
 HD_DEVICES = {
