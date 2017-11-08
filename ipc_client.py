@@ -242,27 +242,23 @@ def main():
                         % MSG_VALS, choices=MSG_VALS)
     parser.add_argument("-device", "--device", help="Target device, accepts: %s"
                         % HD_DEVICES, choices=HD_DEVICES)
-    parser.add_argument("-process", "--process", help="Process to be performed,",
-                        "accepts: %s." % PROCESSES, 
-                        choices=processes, default=None)
+    parser.add_argument("-process", "--process", help="Process to be performed, accepts: %s." % 
+                        PROCESSES, choices=processes, default=None)
     parser.add_argument("-led_config", "--led_config",
-                        help="LED device configuration option, accepts: %s.",
-                        "Default = ON" % LED_STATES, choices=LED_STATES, 
-                        default=None)
+                        help="LED device configuration option, accepts: %s. Default = ON" % 
+                        LED_STATES, choices=LED_STATES, default=None)
     parser.add_argument("-temp_config", "--temp_config",
-                        help="Temperature device configuration option, accepts: ",
-                        "%s. Default = c" % TEMP_STATES, choices=TEMP_STATES, 
-                        default=None)
+                        help="Temperature device configuration option, accepts: %s. Default = c" % 
+                        TEMP_STATES, choices=TEMP_STATES, default=None)
     parser.add_argument("-power_config", "--power_config",
-                        help="Power device configuration option, accepts: %s.",
-                        "Default = 5V" % VOLT_STATES, choices=VOLT_STATES, 
-                        default=None)
+                        help="Power device configuration option, accepts: %s. Default = 5V" % 
+                        VOLT_STATES, choices=VOLT_STATES, default=None)
     parser.add_argument("-b_timeout", "--b_timeout",
-                        help="Timeout for START_BLINK call, must be in seconds.",
-                        "Default = Infinite", type=float, default=None)
+                        help="Timeout for START_BLINK call, must be in seconds. Default = Infinite", 
+                        type=float, default=None)
     parser.add_argument("-b_rate", "--b_rate",
-                        help="Blink rate for START_BLINK call, must be in",
-                        "seconds. Default = 1", type=float, default=None)
+                        help="Blink rate for START_BLINK call, must be in seconds. Default = 1", 
+                        type=float, default=None)
     args = parser.parse_args()
 
     arg_length = len([x for x in vars(args) if getattr(args, x) is not None])

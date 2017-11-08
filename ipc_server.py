@@ -296,8 +296,7 @@ def main():
 
     # Accept command line arguments for the port number used, default is 5555
     parser = argparse.ArgumentParser()
-    parser.add_argument("-port", "--port", help="Port connection,",
-                        "default = 5555", 
+    parser.add_argument("-port", "--port", help="Port connection, default = 5555", 
                         default="5555")
     args = parser.parse_args()
 
