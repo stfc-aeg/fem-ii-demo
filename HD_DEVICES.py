@@ -237,7 +237,6 @@ class HdLed(HdDevice):
                 rate = random.uniform(0.05, 1.0)
             if timeout == None:
                 while self.KEEP_BLINKING:
-                    self.status = "BLINKING"
                     self.turn_on()
                     time.sleep(float(rate))
                     self.turn_off()
@@ -247,7 +246,6 @@ class HdLed(HdDevice):
                 start = time.time()
                 end = start + float(timeout)
                 while time.time() < end:
-                    self.status = "BLINKING"
                     self.turn_on()
                     time.sleep(float(rate))
                     self.turn_off()
@@ -255,6 +253,7 @@ class HdLed(HdDevice):
             
             self.process_status["BLINK"] = False
             self.status = "OFF"
+            self.turn_off()
             #self.process_running = False
             return True
         except ValueError:
