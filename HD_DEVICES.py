@@ -65,22 +65,16 @@ class HdMcp230xx(HdDevice):
 
         if self.model == "MCP23008":
             self.mcp = MCP.MCP23008(self.addr, busnum=self.busnum)
-            # self.mcp = MCP.MCP23008(0x20, busnum=2)
-
         elif self.model == "MCP23017":
             self.mcp = MCP.MCP23017(self.addr, busnum=self.busnum)
-            # self.mcp = MCP.MCP23008(0x20, busnum=2)
+
         self.pins = [0,1,2]
 
     def setup_outputs(self):
         
         for pin in self.pins:
             self.mcp.setup(pin, GPIO.OUT)
-        """
-        self.mcp.setup(0, GPIO.OUT)
-        self.mcp.setup(1, GPIO.OUT)
-        self.mcp.setup(2, GPIO.OUT)
-        """
+ 
     #   MUST BE OVERRIDEN 
     def get_data(self, alias=None):
         pass
@@ -243,6 +237,7 @@ class HdLed(HdDevice):
                 rate = random.uniform(0.05, 1.0)
             if timeout == None:
                 while self.KEEP_BLINKING:
+                    self.status = "BLINKING"
                     self.turn_on()
                     time.sleep(float(rate))
                     self.turn_off()
@@ -252,6 +247,7 @@ class HdLed(HdDevice):
                 start = time.time()
                 end = start + float(timeout)
                 while time.time() < end:
+                    self.status = "BLINKING"
                     self.turn_on()
                     time.sleep(float(rate))
                     self.turn_off()
