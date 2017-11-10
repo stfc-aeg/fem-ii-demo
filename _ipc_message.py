@@ -110,11 +110,17 @@ class IpcMessage(object):
         return self.attrs != other.attrs
 
     def __str__(self):
+        output = ""
         if self.encoding == "JSON":
             return json.dumps(self.attrs,
                             sort_keys=True, indent=4, separators=(',', ': '))
         elif self.encoding == "MSGPACK":
-            return self.attrs
+            for attr in self.attrs:
+                try:
+                    output += "    " + str(attr) + "\n"
+                except TypeError as e:
+                    raise IpcMessageException("Couldn't cast to string: " + str(e))
+            return output
         else:
             raise IpcMessageException("Encoding format %s not recognised or supported") % self.encoding
 
