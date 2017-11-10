@@ -34,14 +34,16 @@ class IpcMessage(object):
             self.attrs['params'] = {}
         else:
             try:
+                
                 # Manually decode bytes when operating in python versions 3.0 - 3.5 inclusive
-                if DECODE_BYTES:
-                    from_str = from_str.decode("utf-8")
+                #if DECODE_BYTES:
+                    #from_str = from_str.decode("utf-8")
                 #self.attrs = json.loads(from_str)
+                
                 self.attrs = umsgpack.unpackb(from_str)
             except ValueError as e:
                 raise IpcMessageException(
-                    "Illegal message JSON format: " + str(e))
+                    "Illegal message JSON format: " + str(e)) + " -- " + from_str
 
     def is_valid(self):
         is_valid = True
