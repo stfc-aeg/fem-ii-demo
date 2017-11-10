@@ -103,6 +103,7 @@ class IpcClient:
 
         #   Encode the message to be sent
         request = request.encode()
+        print (request)
         if isinstance(request, unicode):
             request = cast_bytes(request)
 

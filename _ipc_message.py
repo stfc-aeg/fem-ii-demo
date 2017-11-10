@@ -1,7 +1,7 @@
 import json
 import datetime
 import sys
-import msgpack
+import umsgpack
 
 # Check the python version at runtime. DECODE_BYTES is True when running on python 3.0 - 3.5
 DECODE_BYTES = False
@@ -37,7 +37,8 @@ class IpcMessage(object):
                 # Manually decode bytes when operating in python versions 3.0 - 3.5 inclusive
                 if DECODE_BYTES:
                     from_str = from_str.decode("utf-8")
-                self.attrs = json.loads(from_str)
+                #self.attrs = json.loads(from_str)
+                self.attrs = umsgpack.unpackb(from_str)
             except ValueError as e:
                 raise IpcMessageException(
                     "Illegal message JSON format: " + str(e))
@@ -86,7 +87,7 @@ class IpcMessage(object):
         self.attrs['params'][param_name] = param_value
 
     def encode(self):
-        return msgpack.dumps(self.attrs)
+        return umsgpack.packb(self.attrs)
         #return json.dumps(self.attrs)
 
     def __eq__(self, other):
