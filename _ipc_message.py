@@ -118,7 +118,7 @@ class IpcMessage(object):
                 try:
                     if isinstance (value, dict):
                         output += " {\n"
-                        for key2, value2 in value:
+                        for key2, value2 in value.items():
                             output += "     \"" + str(key2) + "\": \"" + str(value2) + "\",\n"
                         output += "\n},\n"
                     else:
