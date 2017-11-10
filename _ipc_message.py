@@ -118,14 +118,14 @@ class IpcMessage(object):
                 try:
                     if isinstance (value, dict):
                         output += "     \"" + str(key) + "\": {\n"
-                        for key2, value2 in value.items():
+                        for key2, value2 in sorted(value.items()):
                             output += "         \"" + str(key2) + "\": \"" + str(value2) + "\",\n"
-                        output += "\n    },\n"
+                        output += "     },\n"
                     else:
                         output += "     \"" + str(key) + "\": \"" + str(value) + "\",\n"
                 except TypeError as e:
                     raise IpcMessageException("Couldn't cast to string: " + str(e))
-            output+= "\n}"
+            output+= "}"
             return output
         else:
             raise IpcMessageException("Encoding format %s not recognised or supported") % self.encoding
