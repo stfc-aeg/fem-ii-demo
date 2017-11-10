@@ -114,14 +114,15 @@ class IpcMessage(object):
                             sort_keys=True, indent=4, separators=(',', ': '))
         elif self.encoding == "MSGPACK":
             
-            for key, value in sorted(self.attrs):
+            for key, value in sorted(self.attrs.items()):
                 try:
-                    output += "     \"" + str(key) + "\": \"" + str(value) + "\",\n"
                     if isinstance (value, dict):
                         output += " {\n"
                         for key2, value2 in value:
                             output += "     \"" + str(key2) + "\": \"" + str(value2) + "\",\n"
                         output += "\n},\n"
+                    else:
+                        output += "     \"" + str(key) + "\": \"" + str(value) + "\",\n"
                 except TypeError as e:
                     raise IpcMessageException("Couldn't cast to string: " + str(e))
             output+= "\n}"
