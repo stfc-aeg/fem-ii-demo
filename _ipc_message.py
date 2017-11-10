@@ -117,7 +117,7 @@ class IpcMessage(object):
         elif self.encoding == "MSGPACK":
             for attr in self.attrs:
                 try:
-                    output += "    " str(attr) + ": " str(self.attrs[attr]) + ",\n"
+                    output += "    " + str(attr) + ": " str(self.attrs[attr]) + ",\n"
                 except TypeError as e:
                     raise IpcMessageException("Couldn't cast to string: " + str(e))
             return output
