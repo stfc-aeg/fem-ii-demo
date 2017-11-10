@@ -44,7 +44,7 @@ class IpcClient:
     :param url: TCP URL to connect to
     :param context: ZMQ context
     :param socket: ZMQ socket - DEALER
-   
+    :param encoding: the encoding format to use for all ipc messages
     
     """
 
@@ -56,6 +56,7 @@ class IpcClient:
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.DEALER)
         self.socket.setsockopt(zmq.IDENTITY, self.identity.encode())
+        self.encoding = "wibblewobble"
 
     def connect(self):
         """ Connect the socket """
@@ -87,7 +88,7 @@ class IpcClient:
         Returns the encoded ipc message for sending over zmq socket
 
         """
-        request = IpcMessage(msgType, msgVal)
+        request = IpcMessage(msgType, msgVal, encoding=self.encoding)
         request.set_param("DEVICE", msgDevice)
 
         if msgVal == "CONFIG":

@@ -24,8 +24,9 @@ class IpcMessage(object):
     ACK = "ack"
     NACK = "nack"
 
-    def __init__(self, msg_type=None, msg_val=None, from_str=None):
+    def __init__(self, msg_type=None, msg_val=None, from_str=None, encoding="msgpack"):
         self.attrs = {}
+        self.encoding = encoding.upper()
 
         if from_str is None:
             self.attrs['msg_type'] = msg_type
@@ -34,16 +35,18 @@ class IpcMessage(object):
             self.attrs['params'] = {}
         else:
             try:
-                
-                # Manually decode bytes when operating in python versions 3.0 - 3.5 inclusive
-                #if DECODE_BYTES:
-                    #from_str = from_str.decode("utf-8")
-                #self.attrs = json.loads(from_str)
-                
-                self.attrs = umsgpack.unpackb(from_str)
+                if self.encoding == "JSON":
+                    # Manually decode bytes when operating in python versions 3.0 - 3.5 inclusive
+                    if DECODE_BYTES:
+                        from_str = from_str.decode("utf-8")
+                    self.attrs = json.loads(from_str)
+                elif self.encoding == "MSGPACK":
+                    self.attrs = umsgpack.unpackb(from_str)
+                else:
+                    raise IpcMessageException("Encoding format %s not recognised or supported") % self.encoding
             except ValueError as e:
                 raise IpcMessageException(
-                    "Illegal message JSON format: " + str(e)) + " -- " + from_str
+                    "Illegal message %s format: " + str(e)) % self.encoding
 
     def is_valid(self):
         is_valid = True
@@ -89,8 +92,10 @@ class IpcMessage(object):
         self.attrs['params'][param_name] = param_value
 
     def encode(self):
-        return umsgpack.packb(self.attrs)
-        #return json.dumps(self.attrs)
+        if self.encoding == "JSON":
+            return json.dumps(self.attrs)
+        elif self.encoding == "MSGPACK":
+            return umsgpack.packb(self.attrs)
 
     def __eq__(self, other):
         return self.attrs == other.attrs
@@ -99,8 +104,14 @@ class IpcMessage(object):
         return self.attrs != other.attrs
 
     def __str__(self):
-        return json.dumps(self.attrs,
-                          sort_keys=True, indent=4, separators=(',', ': '))
+        if self.encoding == "JSON":
+            return json.dumps(self.attrs,
+                            sort_keys=True, indent=4, separators=(',', ': '))
+        elif self.encoding == "MSGPACK":
+            return self.attrs
+        else:
+            raise IpcMessageException("Encoding format %s not recognised or supported") % self.encoding
+
 
     def _get_attr(self, attr_name, default_value=None):
 

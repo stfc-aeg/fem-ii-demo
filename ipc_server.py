@@ -33,7 +33,7 @@ class IpcServer:
     :param HdMCP: MCP230xx instance
     :param devices: Set of initialised hardware devices
     :param lookup: Address to alias lookup table for hardware device recognition
-
+    :param encoding: the encoding to use for all ipc messaging (msgpack vs JSON)
 
     """
 
@@ -56,6 +56,7 @@ class IpcServer:
             HdLed(pin=2, alias="LED_GREEN", mode="MCP", _mcp=self.HdMCP.mcp)
         ]
         self.lookup = {}
+        self.encoding = "msgpack"
 
     def bind(self):
         """ binds the zmq socket """
@@ -243,7 +244,7 @@ class IpcServer:
                 req_device = None
                 req_config = None
                 reply_string = "Internal Error"
-                reply_message = IpcMessage(msg_type="CMD", msg_val="NOTIFY")
+                reply_message = IpcMessage(msg_type="CMD", msg_val="NOTIFY", encoding=self.encoding)
 
                 if req_alias == "LED_ALL":
                     # No address for a multi device call
