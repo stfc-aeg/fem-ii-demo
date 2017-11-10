@@ -56,7 +56,7 @@ class IpcClient:
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.DEALER)
         self.socket.setsockopt(zmq.IDENTITY, self.identity.encode())
-        self.encoding = "wibblewobble"
+        self.encoding = "msgpack"
 
     def connect(self):
         """ Connect the socket """
@@ -107,7 +107,12 @@ class IpcClient:
         print (request)
         if isinstance(request, unicode):
             request = cast_bytes(request)
-
+        
+        """
+        if request is None:
+            error = "Encoding format %s not recognised or supported" % self.encoding
+            raise IpcMessageException(error)
+        """
         return request
 
     def isDigit(self, value):
