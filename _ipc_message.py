@@ -117,10 +117,10 @@ class IpcMessage(object):
             for key, value in sorted(self.attrs.items()):
                 try:
                     if isinstance (value, dict):
-                        output += " {\n"
+                        output += "     \"" + str(key) + "\": {\n"
                         for key2, value2 in value.items():
-                            output += "     \"" + str(key2) + "\": \"" + str(value2) + "\",\n"
-                        output += "\n},\n"
+                            output += "         \"" + str(key2) + "\": \"" + str(value2) + "\",\n"
+                        output += "\n    },\n"
                     else:
                         output += "     \"" + str(key) + "\": \"" + str(value) + "\",\n"
                 except TypeError as e:
