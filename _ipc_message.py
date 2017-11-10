@@ -21,6 +21,8 @@ class IpcMessageException(Exception):
 
 class IpcMessage(object):
 
+    ENCODING = ["MSGPACK", "JSON"]
+
     ACK = "ack"
     NACK = "nack"
 
@@ -43,7 +45,11 @@ class IpcMessage(object):
                 elif self.encoding == "MSGPACK":
                     self.attrs = umsgpack.unpackb(from_str)
                 else:
-                    raise IpcMessageException("Encoding format %s not recognised or supported") % self.encoding
+                    try:
+                        encode = ENCODING.index(self.encoding)
+                        #   find the encoding type in the list - raise value error
+                    except ValueError as e:
+                        raise IpcMessageException("Encoding format %s not recognised or supported") % self.encoding
             except ValueError as e:
                 raise IpcMessageException(
                     "Illegal message %s format: " + str(e)) % self.encoding
