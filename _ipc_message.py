@@ -110,14 +110,14 @@ class IpcMessage(object):
         return self.attrs != other.attrs
 
     def __str__(self):
-        output = ""
+        output = "\n"
         if self.encoding == "JSON":
             return json.dumps(self.attrs,
                             sort_keys=True, indent=4, separators=(',', ': '))
         elif self.encoding == "MSGPACK":
             for attr in self.attrs:
                 try:
-                    output += "    " + str(attr) + "\n"
+                    output += "    " str(attr) + ": " str(self.attrs[attr]) + ",\n"
                 except TypeError as e:
                     raise IpcMessageException("Couldn't cast to string: " + str(e))
             return output
