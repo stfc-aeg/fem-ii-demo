@@ -113,13 +113,14 @@ class IpcMessage(object):
             return json.dumps(self.attrs,
                             sort_keys=True, indent=4, separators=(',', ': '))
         elif self.encoding == "MSGPACK":
-            for attr in sorted(self.attrs.iterkeys()):
+            
+            for key, value in sorted(self.attrs):
                 try:
-                    output += "     \"" + str(attr) + "\": \"" + str(self.attrs[attr]) + "\",\n"
-                    if isinstance (self.attrs[attr], dict):
+                    output += "     \"" + str(key) + "\": \"" + str(value) + "\",\n"
+                    if isinstance (value, dict):
                         output += " {\n"
-                        for attr in self.attrs[attr]:
-                            output += "     \"" + str(attr) + "\": \"" + str(self.attrs[attr][attr]) + "\",\n"
+                        for key2, value2 in value:
+                            output += "     \"" + str(key2) + "\": \"" + str(value2) + "\",\n"
                         output += "\n},\n"
                 except TypeError as e:
                     raise IpcMessageException("Couldn't cast to string: " + str(e))
