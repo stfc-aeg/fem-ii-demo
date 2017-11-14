@@ -1,7 +1,7 @@
 import json
 import datetime
 import sys
-import umsgpack
+import msgpack
 
 # Check the python version at runtime. DECODE_BYTES is True when running on python 3.0 - 3.5
 DECODE_BYTES = False
@@ -41,7 +41,7 @@ class IpcMessage(object):
                         from_str = from_str.decode("utf-8")
                     self.attrs = json.loads(from_str)
                 elif self.encoding == "MSGPACK":
-                    self.attrs = umsgpack.unpackb(from_str)
+                    self.attrs = msgpack.unpackb(from_str)
                 else:
                     encode_error = "Encoding format %s not recognised or supported" % self.encoding
                     raise IpcMessageException(encode_error)
@@ -96,7 +96,7 @@ class IpcMessage(object):
         if self.encoding == "JSON":
             return json.dumps(self.attrs)
         elif self.encoding == "MSGPACK":
-            return umsgpack.packb(self.attrs)
+            return msgpack.packb(self.attrs)
         else:
             encode_error = "Encoding format %s not recognised or supported" % self.encoding
             raise IpcMessageException(encode_error)
@@ -113,7 +113,7 @@ class IpcMessage(object):
             return json.dumps(self.attrs,
                             sort_keys=True, indent=4, separators=(',', ': '))
         elif self.encoding == "MSGPACK":
-            
+            # Does this work in Py2 ?
             for key, value in sorted(self.attrs.items()):
                 try:
                     if isinstance (value, dict):
