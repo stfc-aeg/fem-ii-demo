@@ -42,7 +42,7 @@ class IpcMessage(object):
                     self.attrs = json.loads(from_str)
                 elif self.encoding == "MSGPACK":
                         # MsgPack does not decode raw strings back into strings.
-                    self.attrs = msgpack.unpackb(from_str, encoding="utf8")
+                    self.attrs = msgpack.unpackb(from_str, use_bin_type=True, encoding="utf-8")
                 else:
                     encode_error = "Encoding format %s not recognised or supported" % self.encoding
                     raise IpcMessageException(encode_error)

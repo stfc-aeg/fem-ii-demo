@@ -56,7 +56,7 @@ class IpcServer:
             HdLed(pin=2, alias="LED_GREEN", mode="MCP", _mcp=self.HdMCP.mcp)
         ]
         self.lookup = {}
-        self.encoding = "wibble wobbley"
+        self.encoding = "msgpack"
 
     def bind(self):
         """ binds the zmq socket """
